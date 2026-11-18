@@ -1,2 +1,2044 @@
 # sensemap-3d
-cars sensor location in 3d 
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Indian Automobile Doctor // SENSEMAP 3D Sensor Locator</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            iadnavy: '#0B132B',
+            iadcharcoal: '#111827',
+            iadred: '#DC2626',
+            iadcrimson: '#E11D48',
+            iadblue: '#1D4ED8',
+            iadslate: '#F3F4F6',
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      background-color: #F3F4F6;
+      color: #111827;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #E5E7EB;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #9CA3AF;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #6B7280;
+    }
+    .iad-hero-grid {
+      background-color: #0B132B;
+      background-image:
+        radial-gradient(circle at 75% 30%, rgba(220, 38, 38, 0.16) 0%, rgba(11, 19, 43, 0.96) 65%),
+        linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+      background-size: 100% 100%, 32px 32px, 32px 32px;
+    }
+    .viewport-grid {
+      background: radial-gradient(circle at 50% 45%, #1E293B 0%, #0B132B 100%);
+    }
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#F3F4F6] text-[#111827] selection:bg-[#DC2626] selection:text-white">
+
+  <!-- TOAST NOTIFICATION BANNER -->
+  <div id="toastBanner" class="fixed bottom-5 right-5 z-50 hidden items-center gap-3 bg-[#0B132B] border-2 border-[#DC2626] text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300">
+    <span id="toastDot" class="w-2.5 h-2.5 rounded-full bg-[#DC2626] animate-ping"></span>
+    <span id="toastText" class="text-xs sm:text-sm font-mono font-semibold">System Initialized</span>
+  </div>
+
+  <!-- TOP UTILITY BAR (Indian Automobile Doctor Brand Strip) -->
+  <div class="bg-[#0B132B] text-slate-300 text-[11px] font-mono border-b border-slate-800">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 h-8 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <span class="inline-flex items-center gap-1.5 text-white font-bold">
+          <span class="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+          INDIAN AUTOMOBILE DOCTOR
+        </span>
+        <span class="hidden sm:inline text-slate-500">|</span>
+        <span class="hidden sm:inline text-slate-300">OEM 3D Sensor Topology &amp; VIN Diagnostic Portal</span>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="hidden md:inline text-slate-400">COMPATIBLE: XTOOL • LAUNCH • AUTEL • THINKCAR • BOSCH</span>
+        <span class="px-2 py-0.5 rounded bg-[#1D4ED8] text-white text-[10px] font-bold">BS4 • BS6.2 • EURO 6</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN SAAS NAVIGATION HEADER -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
+    <div class="max-w-[1720px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+      <!-- Brand Logo -->
+      <button onclick="navigateTo('home')" class="flex items-center gap-3 text-left group cursor-pointer focus:outline-none">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-[#DC2626] to-[#991B1B] flex items-center justify-center shadow-md shadow-red-600/20 group-hover:scale-105 transition">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 7.5l-9-5.25L3 7.5m18 0l-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-black tracking-tight text-sm sm:text-base text-[#0B132B]">SENSEMAP <span class="text-[#DC2626]">3D</span></span>
+            <span class="hidden lg:inline-block text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-red-50 text-[#DC2626] border border-red-200">BY IAD</span>
+          </div>
+          <p class="text-[10px] font-mono text-gray-500 hidden sm:block">3D ENGINE BAY SENSOR PUCKS &amp; PINOUTS</p>
+        </div>
+      </button>
+
+      <!-- 4 Main SaaS Navigation Tabs -->
+      <nav class="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200 overflow-x-auto max-w-full">
+        <button data-nav="home" onclick="navigateTo('home')" class="nav-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap cursor-pointer">
+          Overview
+        </button>
+        <button data-nav="workspace" onclick="navigateTo('workspace')" class="nav-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition flex items-center gap-1.5 whitespace-nowrap cursor-pointer">
+          <span class="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+          <span>3D Diagnostic Workspace</span>
+        </button>
+        <button data-nav="manuals" onclick="navigateTo('manuals')" class="nav-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap cursor-pointer">
+          OEM Manuals Library
+        </button>
+        <button data-nav="plans" onclick="navigateTo('plans')" class="nav-tab px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-bold transition whitespace-nowrap cursor-pointer">
+          Academy &amp; Workshop Plans
+        </button>
+      </nav>
+
+      <!-- Share Link & Bay Sheet Actions -->
+      <div class="flex items-center gap-2">
+        <button
+          onclick="openCsvImportModal()"
+          class="hidden md:flex px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 text-xs font-mono font-bold items-center gap-1.5 transition cursor-pointer"
+          title="Paste or upload updated rows from indian_cars_specs_catalog CSV"
+        >
+          <span>⇄ Sync CSV</span>
+        </button>
+
+        <button
+          onclick="shareCurrentSensorSpot()"
+          class="px-3 sm:px-3.5 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold shadow-sm shadow-red-600/20 flex items-center gap-1.5 transition cursor-pointer"
+          title="Copy direct shareable link for this exact car & sensor spot"
+        >
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.3" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+          </svg>
+          <span class="hidden sm:inline">Share Sensor Link</span>
+          <span class="sm:hidden">Share</span>
+        </button>
+
+        <button
+          onclick="openJobCardModal()"
+          class="hidden xl:flex px-3.5 py-2 rounded-xl bg-[#0B132B] hover:bg-[#1E293B] text-white text-xs font-mono font-bold transition cursor-pointer"
+        >
+          Bay Sheet
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 1: OVERVIEW / LANDING PAGE (WITH LIVE 3D HERO ENGINE PREVIEW)    -->
+  <!-- ===================================================================== -->
+  <div id="view-home" class="app-view flex-1">
+    <!-- Hero Banner -->
+    <section class="iad-hero-grid text-white border-b border-slate-800">
+      <div class="max-w-[1540px] mx-auto px-4 sm:px-6 py-10 sm:py-14 lg:py-16 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <!-- Left Hero Copy & VIN Decoder -->
+        <div class="lg:col-span-6 flex flex-col gap-5">
+          <div class="inline-flex items-center gap-2 self-start px-3 py-1 rounded-full bg-white/10 border border-white/15 text-xs font-mono text-red-300">
+            <span class="w-2 h-2 rounded-full bg-[#DC2626] animate-ping"></span>
+            <span>BUILT FOR INDIAN &amp; GLOBAL MULTI-BRAND WORKSHOPS</span>
+          </div>
+
+          <h1 class="text-3xl sm:text-5xl font-black tracking-tight leading-[1.1]">
+            Find Any Car Sensor in <span class="text-[#DC2626]">3D</span> Before Touching a Wrench.
+          </h1>
+
+          <p class="text-sm sm:text-base text-slate-300 leading-relaxed max-w-xl">
+            Every OEM hides Crank (CKP), Cam (CMP), MAP, Knock, and O2 sensors in different spots across BS4, BS6.2, Korean, Japanese, German &amp; Chinese engines. Enter a <strong class="text-white">VIN</strong> or <strong class="text-white">DTC fault code</strong> to inspect the exact 3D sensor puck, mounting flange, and pinout.
+          </p>
+
+          <!-- Instant Hero VIN Box -->
+          <div class="bg-white rounded-2xl p-4 text-[#111827] shadow-2xl border border-gray-200 flex flex-col gap-3 max-w-xl">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-mono font-bold uppercase text-[#0B132B]">Instant 17-Digit VIN Decoder</span>
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-[#1D4ED8] border border-blue-200 font-mono text-[10px] font-bold">AUTO-LOCATE 3D</span>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                id="heroVinInput"
+                type="text"
+                maxlength="17"
+                value="MA3EJKD1S00849210"
+                placeholder="Enter 17-character VIN (e.g. MA3EJKD1S00849210)"
+                class="flex-1 bg-gray-50 border border-gray-300 focus:border-[#DC2626] rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-mono font-bold uppercase text-[#0B132B] focus:outline-none"
+              />
+              <button
+                onclick="decodeFromHero()"
+                class="px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-xs sm:text-sm transition shadow-md shadow-red-600/25 whitespace-nowrap cursor-pointer"
+              >
+                Open 3D Engine →
+              </button>
+            </div>
+
+            <!-- Quick-Launch Car Pills -->
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              <button onclick="quickLaunchCatalogModel('Maruti Suzuki', 'Swift', 'Petrol')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇮🇳 Swift Z12E / CNG</button>
+              <button onclick="quickLaunchCatalogModel('Tata Motors', 'Nexon', 'Diesel')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇮🇳 Nexon CRDi / EV</button>
+              <button onclick="quickLaunchCatalogModel('Mahindra', 'XUV700', 'Diesel')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇮🇳 XUV700 mHawk</button>
+              <button onclick="quickLaunchCatalogModel('Hyundai', 'Creta', 'Diesel')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇰🇷 Creta 1.5 CRDi</button>
+              <button onclick="quickLaunchCatalogModel('Honda', 'City', 'Petrol')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇯🇵 City L15Z i-VTEC</button>
+              <button onclick="quickLaunchCatalogModel('Volkswagen', 'Virtus', 'Petrol')" class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-[#DC2626] hover:border-red-200 border border-gray-200 text-[11px] font-mono font-semibold transition cursor-pointer">🇩🇪 Virtus / Slavia TSI</button>
+              <button onclick="quickLaunchCatalogModel('Mahindra', 'BE 6', 'Electric')" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 text-[11px] font-mono font-semibold transition cursor-pointer">⚡ BE 6 / XEV 9E EV</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Live Interactive 3D Hero Engine Preview -->
+        <div class="lg:col-span-6 bg-[#111827] border border-slate-700 rounded-2xl overflow-hidden shadow-2xl flex flex-col">
+          <div class="px-4 py-2.5 bg-[#0B132B] border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-[#DC2626]"></span>
+              <span class="text-xs font-mono font-bold text-white">LIVE 3D ENGINE BAY PREVIEW — DRAG TO ROTATE</span>
+            </div>
+            <button onclick="navigateTo('workspace')" class="text-[11px] font-mono font-bold text-red-400 hover:text-red-300 cursor-pointer">
+              Full Screen Bay →
+            </button>
+          </div>
+          <div id="hero3dMount" class="relative w-full h-[310px] sm:h-[360px] viewport-grid">
+            <!-- Hero Three.js Canvas mounts here -->
+            <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+              <span class="px-2.5 py-1 rounded-lg bg-[#0B132B]/90 border border-slate-700 text-[11px] font-mono text-slate-200">
+                Highlighted: <strong class="text-[#DC2626]">3D Sensor Pucks &amp; Wiring Leads</strong>
+              </span>
+              <button onclick="navigateTo('workspace')" class="pointer-events-auto px-3 py-1 rounded-lg bg-[#DC2626] text-white text-xs font-bold shadow cursor-pointer">
+                Inspect Sensors in 3D
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Indexed OEM Platforms Grid -->
+    <section class="max-w-[1540px] mx-auto px-4 sm:px-6 py-10">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-2">
+        <div>
+          <span id="homeCatalogCounterBadge" class="text-xs font-mono font-bold uppercase tracking-wider text-[#DC2626]">WIRED CATALOG // 109 MODELS • 6 3D POWERTRAIN ARCHITECTURES</span>
+          <h2 class="text-2xl sm:text-3xl font-black text-[#0B132B] mt-1">Select Any Vehicle or Powertrain Architecture to Inspect 3D Sensor Pucks</h2>
+        </div>
+        <button onclick="navigateTo('manuals')" class="text-xs font-mono font-bold text-[#1D4ED8] hover:underline cursor-pointer">Browse All 109 Wired Models →</button>
+      </div>
+
+      <div id="homeCoverageGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Populated dynamically -->
+      </div>
+    </section>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 2: 3D DIAGNOSTIC WORKSPACE (CORE INTERACTIVE APP)                -->
+  <!-- ===================================================================== -->
+  <div id="view-workspace" class="app-view hidden flex-1">
+    <div class="max-w-[1840px] mx-auto p-3 sm:p-4 grid grid-cols-1 lg:grid-cols-12 gap-3.5">
+
+      <!-- LEFT COLUMN: VIN DECODER, VEHICLE SELECTOR & SENSOR LIST (3 Cols) -->
+      <aside class="lg:col-span-3 bg-white border border-gray-200 rounded-2xl p-3.5 shadow-sm flex flex-col gap-3.5 lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto">
+        <!-- VIN Decoder -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono font-bold uppercase text-[#0B132B]">VIN Decoder Engine</span>
+            <span id="wsVinLength" class="text-[10px] font-mono text-gray-500">17/17 CHARS</span>
+          </div>
+          <div class="flex gap-1.5">
+            <input
+              id="wsVinInput"
+              type="text"
+              maxlength="17"
+              placeholder="17-digit VIN..."
+              class="w-full bg-white border border-gray-300 focus:border-[#DC2626] rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold uppercase text-[#0B132B] focus:outline-none"
+            />
+            <button id="wsDecodeBtn" class="px-3 py-1.5 rounded-lg bg-[#0B132B] hover:bg-[#1E293B] text-white font-bold text-xs transition cursor-pointer">
+              Decode
+            </button>
+          </div>
+          <div class="grid grid-cols-2 gap-1.5 text-[10px] font-mono">
+            <div class="bg-white border border-gray-200 rounded px-2 py-1">
+              <span class="text-gray-400 block">ORIGIN / WMI</span>
+              <span id="vinOriginVal" class="text-[#0B132B] font-bold">India (MA3)</span>
+            </div>
+            <div class="bg-white border border-gray-200 rounded px-2 py-1">
+              <span class="text-gray-400 block">ENGINE CODE</span>
+              <span id="vinEngineVal" class="text-[#DC2626] font-bold">K12N DualJet</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Make & Variant Selector -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono font-bold uppercase text-[#0B132B]">Catalog Vehicle &amp; Fuel</span>
+            <span id="wsCatalogCountMini" class="text-[10px] font-mono font-bold text-[#1D4ED8]">109 CARS</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="wsBrandSelect" class="text-[10px] font-mono text-gray-500 block mb-0.5">OEM Brand</label>
+              <select id="wsBrandSelect" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-semibold text-[#111827] focus:border-[#DC2626] focus:outline-none"></select>
+            </div>
+            <div>
+              <label for="wsModelSelect" class="text-[10px] font-mono text-gray-500 block mb-0.5">Model</label>
+              <select id="wsModelSelect" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-semibold text-[#111827] focus:border-[#DC2626] focus:outline-none"></select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label for="wsFuelSelect" class="text-[10px] font-mono text-gray-500 block mb-0.5">Fuel / Powertrain</label>
+              <select id="wsFuelSelect" class="w-full bg-white border border-gray-300 rounded-lg px-2 py-1.5 text-xs font-bold text-[#DC2626] focus:border-[#DC2626] focus:outline-none"></select>
+            </div>
+            <div>
+              <label class="text-[10px] font-mono text-gray-500 block mb-0.5">Displacement</label>
+              <div id="wsCcBadge" class="w-full bg-white border border-gray-200 rounded-lg px-2 py-1.5 text-[11px] font-mono font-bold text-[#0B132B] truncate">1197 cc</div>
+            </div>
+          </div>
+          <div class="flex items-center justify-between pt-1 border-t border-gray-200 text-[10px] font-mono">
+            <span id="wsTransText" class="text-gray-600 truncate max-w-[165px]">5-MT / 5-AMT</span>
+            <a id="wsOemManualLink" href="https://www.marutisuzuki.com/arena/car-manuals" target="_blank" rel="noopener noreferrer" class="text-[#1D4ED8] hover:underline font-bold shrink-0">
+              OEM Portal ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- OBD-II DTC Fault Code Quick-Jump -->
+        <div class="flex flex-col gap-2">
+          <div class="flex gap-1.5">
+            <input
+              id="wsDtcInput"
+              type="text"
+              placeholder="Jump by DTC (P0335, P0106...)"
+              class="flex-1 bg-white border border-blue-300 focus:border-[#1D4ED8] rounded-lg px-2.5 py-1.5 text-xs font-mono font-bold uppercase text-[#0B132B] placeholder-gray-400 focus:outline-none"
+            />
+            <button id="wsDtcBtn" class="px-3 py-1.5 rounded-lg bg-[#1D4ED8] hover:bg-blue-800 text-white font-mono font-bold text-xs transition cursor-pointer">
+              DTC Jump
+            </button>
+          </div>
+
+          <!-- Quick DTC Chips -->
+          <div class="flex flex-wrap gap-1">
+            <button onclick="triggerQuickDtc('P0335')" class="px-2 py-0.5 rounded bg-red-50 hover:bg-red-100 text-[#DC2626] border border-red-200 font-mono text-[10px] font-bold cursor-pointer">P0335 CKP</button>
+            <button onclick="triggerQuickDtc('P0340')" class="px-2 py-0.5 rounded bg-red-50 hover:bg-red-100 text-[#DC2626] border border-red-200 font-mono text-[10px] font-bold cursor-pointer">P0340 CMP</button>
+            <button onclick="triggerQuickDtc('P0106')" class="px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 font-mono text-[10px] font-bold cursor-pointer">P0106 MAP</button>
+            <button onclick="triggerQuickDtc('P0325')" class="px-2 py-0.5 rounded bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 font-mono text-[10px] font-bold cursor-pointer">P0325 KNOCK</button>
+            <button onclick="triggerQuickDtc('P0135')" class="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-mono text-[10px] font-bold cursor-pointer">P0135 O2</button>
+            <button onclick="triggerQuickDtc('P0117')" class="px-2 py-0.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-800 border border-gray-300 font-mono text-[10px] font-bold cursor-pointer">P0117 ECT</button>
+          </div>
+        </div>
+
+        <!-- Sensor List -->
+        <div class="flex items-center justify-between pt-1 border-t border-gray-200">
+          <span class="text-[11px] font-mono font-bold uppercase text-gray-500">3D Indexed Sensors</span>
+          <span id="wsSensorCountBadge" class="text-[10px] font-mono font-bold text-[#1D4ED8]">7 PUCKS</span>
+        </div>
+        <div id="wsSensorList" class="flex flex-col gap-1.5">
+          <!-- Populated dynamically -->
+        </div>
+      </aside>
+
+      <!-- CENTER COLUMN: INTERACTIVE 3D ENGINE BAY & CAMERA CONTROLS (5 Cols) -->
+      <section class="lg:col-span-5 flex flex-col gap-3.5">
+        <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm flex flex-col">
+          <!-- Viewport Header Bar -->
+          <div class="px-4 py-3 bg-[#0B132B] text-white flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-[#DC2626] animate-ping"></span>
+                <h2 id="wsVehicleHeading" class="text-xs sm:text-sm font-extrabold">Maruti Suzuki Swift (ZXi+ 1.2L K12N)</h2>
+              </div>
+              <p id="wsEngineArch" class="text-[11px] font-mono text-slate-300 mt-0.5">Inline-4 DOHC DualJet • Transverse FWD</p>
+            </div>
+
+            <!-- X-Ray Block Toggle -->
+            <button
+              id="xrayToggleBtn"
+              onclick="toggleXrayMode()"
+              class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-mono font-bold text-white flex items-center gap-1.5 transition cursor-pointer"
+            >
+              <span id="xrayDot" class="w-2 h-2 rounded-full bg-slate-400"></span>
+              <span>X-Ray Block: OFF</span>
+            </button>
+          </div>
+
+          <!-- 3D ENGINE BAY CANVAS MOUNT (#spatialViewportMount) -->
+          <div id="spatialViewportMount" class="relative w-full h-[370px] sm:h-[430px] viewport-grid select-none">
+            <!-- Top Floating HUD Banner -->
+            <div class="absolute top-3 left-3 right-3 z-10 flex flex-wrap items-start justify-between gap-2 pointer-events-none">
+              <div class="bg-[#0B132B]/90 backdrop-blur border border-[#DC2626] rounded-xl px-3 py-2 shadow-lg max-w-[260px]">
+                <div class="flex items-center gap-2">
+                  <span id="hudActiveCode" class="px-1.5 py-0.5 rounded bg-[#DC2626] text-white font-mono text-[10px] font-bold">CKP</span>
+                  <span id="hudActiveName" class="text-xs font-bold text-white truncate">Crankshaft Position Sensor</span>
+                </div>
+                <p id="hudActiveZone" class="text-[11px] font-mono text-red-300 mt-0.5">Rear Lower Block • Bellhousing</p>
+              </div>
+
+              <div class="bg-[#0B132B]/90 backdrop-blur border border-slate-700 rounded-xl px-3 py-2 text-[10px] font-mono text-slate-200 shadow-lg">
+                <div class="text-slate-400">3D PUCK COORDINATES</div>
+                <div id="hudCoordReadout" class="text-white font-bold mt-0.5">X:+1.55 | Y:-0.55 | Z:+0.72</div>
+                <div class="text-blue-400 mt-0.5">CLICK ANY 3D PUCK TO FOCUS</div>
+              </div>
+            </div>
+
+            <!-- Bottom Camera Angle Preset Bar -->
+            <div class="absolute bottom-3 left-3 right-3 z-10 flex flex-wrap items-center justify-center gap-1.5">
+              <button onclick="setCameraPreset('overview')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#DC2626] text-white font-mono text-[10px] font-bold shadow cursor-pointer">3/4 Bay</button>
+              <button onclick="setCameraPreset('front')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#0B132B]/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[10px] font-bold cursor-pointer">Front Timing</button>
+              <button onclick="setCameraPreset('intake')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#0B132B]/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[10px] font-bold cursor-pointer">Intake Side</button>
+              <button onclick="setCameraPreset('exhaust')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#0B132B]/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[10px] font-bold cursor-pointer">Exhaust</button>
+              <button onclick="setCameraPreset('rear')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#0B132B]/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[10px] font-bold cursor-pointer">Bellhousing</button>
+              <button onclick="setCameraPreset('top')" class="cam-preset-btn px-2.5 py-1 rounded-lg bg-[#0B132B]/90 hover:bg-slate-800 text-slate-200 border border-slate-700 font-mono text-[10px] font-bold cursor-pointer">Top Down</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Physical Access & Removal Procedure Card -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 pb-2.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-blue-50 text-[#1D4ED8] border border-blue-200 font-mono text-[10px] font-bold">WORKSHOP SOP</span>
+              <h3 class="text-xs sm:text-sm font-extrabold text-[#0B132B]">Access &amp; Removal Steps</h3>
+            </div>
+            <span id="wsTorqueSpec" class="text-xs font-mono font-bold text-[#DC2626]">Torque: 10mm • 8.5 Nm</span>
+          </div>
+
+          <ol id="wsAccessStepsList" class="flex flex-col gap-2">
+            <!-- Populated dynamically -->
+          </ol>
+
+          <div class="bg-gray-50 border border-gray-200 rounded-xl p-2.5 flex flex-wrap items-center gap-2">
+            <span class="text-[10px] font-mono font-bold uppercase text-gray-500">TOOLS REQUIRED:</span>
+            <div id="wsToolsBadges" class="flex flex-wrap gap-1.5"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: 3D SENSOR PUCK CLOSE-UP & OEM PINOUT INSPECTOR (4 Cols) -->
+      <aside class="lg:col-span-4 bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col gap-3.5 lg:max-h-[calc(100vh-110px)] lg:overflow-y-auto">
+        <!-- Sensor Title & Part Number -->
+        <div class="flex items-start justify-between gap-2 border-b border-gray-200 pb-3">
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5">
+              <span id="inspCodeBadge" class="px-2 py-0.5 rounded bg-[#DC2626] text-white font-mono text-xs font-bold">CKP</span>
+              <span id="inspDtcBadge" class="px-2 py-0.5 rounded bg-blue-50 border border-blue-200 text-[#1D4ED8] font-mono text-xs font-bold">DTC: P0335 / P0336</span>
+            </div>
+            <h2 id="inspSensorTitle" class="text-base sm:text-lg font-extrabold text-[#0B132B] mt-1.5">Crankshaft Position Sensor</h2>
+            <p id="inspOemPart" class="text-xs font-mono font-semibold text-gray-600 mt-0.5">OEM Part #: 33220-81P10-000</p>
+          </div>
+
+          <div class="flex flex-col gap-1.5 shrink-0">
+            <button onclick="openJobCardModal()" class="px-3 py-1.5 rounded-xl bg-[#0B132B] hover:bg-[#1E293B] text-white font-bold text-xs transition cursor-pointer">
+              Job Card
+            </button>
+            <a id="inspManualPortalBtn" href="https://www.marutisuzuki.com/arena/car-manuals" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded-lg bg-blue-50 hover:bg-blue-100 text-[#1D4ED8] border border-blue-200 font-mono font-bold text-[10px] text-center transition">
+              OEM Manual ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Exact Mounting Surface Summary -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+          <span class="text-[10px] font-mono font-bold uppercase text-[#1D4ED8] block mb-1">Exact Mounting Spot &amp; Orientation</span>
+          <p id="inspLocationDesc" class="text-xs sm:text-sm text-gray-800 leading-relaxed"></p>
+        </div>
+
+        <!-- Harness Connector Pinout Diagram -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-[10px] font-mono font-bold uppercase text-[#0B132B]">Connector Pinout (Harness Side)</span>
+            <span id="inspPinCount" class="text-[10px] font-mono font-bold text-[#DC2626]">3-PIN SEALED</span>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+            <div id="inspConnectorSvg" class="sm:col-span-5 flex items-center justify-center bg-[#0B132B] rounded-lg p-2.5"></div>
+            <div id="inspPinLegend" class="sm:col-span-7 flex flex-col gap-1.5 text-xs font-mono"></div>
+          </div>
+        </div>
+
+        <!-- Multimeter & Oscilloscope Specs -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3">
+          <span class="text-[10px] font-mono font-bold uppercase text-[#0B132B] block mb-2">Multimeter &amp; Scope Reference Values</span>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <div class="bg-white border border-gray-200 rounded-lg p-2">
+              <span class="text-[10px] font-mono text-gray-500 block">CIRCUIT TYPE</span>
+              <span id="inspCircuitType" class="font-mono font-bold text-[#0B132B] mt-0.5 block"></span>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-2">
+              <span class="text-[10px] font-mono text-gray-500 block">KEY-ON (KOEO)</span>
+              <span id="inspKoeoVal" class="font-mono font-bold text-[#1D4ED8] mt-0.5 block"></span>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-2">
+              <span class="text-[10px] font-mono text-gray-500 block">RESISTANCE</span>
+              <span id="inspOhmsVal" class="font-mono font-bold text-gray-800 mt-0.5 block"></span>
+            </div>
+            <div class="bg-white border border-gray-200 rounded-lg p-2">
+              <span class="text-[10px] font-mono text-gray-500 block">WAVEFORM</span>
+              <span id="inspWaveVal" class="font-mono font-bold text-[#DC2626] mt-0.5 block"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Real-World Failure Trap Alert -->
+        <div class="bg-red-50 border border-red-200 rounded-xl p-3">
+          <div class="flex items-center gap-1.5 text-xs font-mono font-bold text-[#DC2626] mb-1">
+            <span>⚠️ WORKSHOP DIAGNOSTIC TRAP — CHECK BEFORE REPLACING</span>
+          </div>
+          <p id="inspFailureTrap" class="text-xs text-gray-800 leading-relaxed"></p>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 3: OEM MANUALS & 109-CAR SPECS CATALOG LIBRARY                   -->
+  <!-- ===================================================================== -->
+  <div id="view-manuals" class="app-view hidden flex-1">
+    <div class="max-w-[1540px] mx-auto px-4 sm:px-6 py-8 flex flex-col gap-6">
+      <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-gray-300 pb-5">
+        <div>
+          <span id="catalogHeaderTag" class="text-xs font-mono font-bold uppercase tracking-wider text-[#DC2626]">INDIAN CARS SPECS CATALOG // 109 WIRED VEHICLES</span>
+          <h1 class="text-2xl sm:text-3xl font-black text-[#0B132B] mt-1">OEM Workshop Manual &amp; 3D Sensor Catalog</h1>
+          <p class="text-xs sm:text-sm text-gray-600 mt-1">Wired directly from <code class="font-mono bg-gray-200 px-1.5 py-0.5 rounded text-[#0B132B]">indian_cars_specs_catalog</code> — filter by OEM Brand, Fuel Type (Petrol, CNG, Diesel, Hybrid, EV), or launch any model straight into the 3D bay.</p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <input
+            id="manualSearchInput"
+            type="text"
+            placeholder="Search brand, model, engine, CC..."
+            class="bg-white border border-gray-300 focus:border-[#DC2626] rounded-xl px-3.5 py-2 text-xs sm:text-sm text-[#111827] focus:outline-none min-w-[210px]"
+          />
+          <select id="manualBrandFilter" class="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#111827] focus:border-[#DC2626] focus:outline-none">
+            <option value="ALL">All OEM Brands</option>
+          </select>
+          <select id="manualFuelFilter" class="bg-white border border-gray-300 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-[#111827] focus:border-[#DC2626] focus:outline-none">
+            <option value="ALL">All Fuel Types</option>
+            <option value="Petrol">Petrol</option>
+            <option value="CNG">CNG</option>
+            <option value="Diesel">Diesel</option>
+            <option value="Hybrid">Hybrid</option>
+            <option value="Electric">Electric (EV)</option>
+          </select>
+          <button onclick="openCsvImportModal()" class="px-3.5 py-2 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white font-mono font-bold text-xs transition cursor-pointer">
+            + Import / Sync CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-gray-200 bg-[#0B132B] text-[11px] font-mono uppercase text-slate-200">
+                <th class="py-3.5 px-4">OEM Brand</th>
+                <th class="py-3.5 px-4">Model &amp; Body Type</th>
+                <th class="py-3.5 px-4">Fuel &amp; CC Range</th>
+                <th class="py-3.5 px-4">Powertrain Notes &amp; Transmissions</th>
+                <th class="py-3.5 px-4">3D Architecture</th>
+                <th class="py-3.5 px-4 text-center">OEM Manual</th>
+                <th class="py-3.5 px-4 text-right">3D Workspace</th>
+              </tr>
+            </thead>
+            <tbody id="manualTableBody" class="divide-y divide-gray-200 text-xs sm:text-sm">
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- VIEW 4: ACADEMY & WORKSHOP PLANS                                      -->
+  <!-- ===================================================================== -->
+  <div id="view-plans" class="app-view hidden flex-1">
+    <div class="max-w-[1380px] mx-auto px-4 sm:px-6 py-12 flex flex-col gap-8">
+      <div class="text-center max-w-2xl mx-auto">
+        <span class="text-xs font-mono font-bold uppercase tracking-wider text-[#DC2626]">INDIAN AUTOMOBILE DOCTOR // PRO LICENSING</span>
+        <h1 class="text-3xl sm:text-4xl font-black text-[#0B132B] mt-2">Equip Your Workshop or Training Academy with 3D Sensor Topology</h1>
+        <p class="text-xs sm:text-sm text-gray-600 mt-2">Stop wasting hours hunting hidden sensors or replacing good parts. Built for Indian multi-brand workshops and automotive training institutes.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- Tier 1 -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase text-gray-500">SOLO TECHNICIAN</span>
+            <h2 class="text-xl font-extrabold text-[#0B132B] mt-1">Mobile Diagnostician</h2>
+            <div class="mt-4 flex items-baseline gap-1">
+              <span class="text-3xl font-black font-mono text-[#0B132B]">₹999</span>
+              <span class="text-xs font-mono text-gray-500">/ month</span>
+            </div>
+            <ul class="mt-5 flex flex-col gap-2.5 text-xs sm:text-sm text-gray-700">
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> Unlimited VIN Decodes (Indian &amp; Asian OEMs)</li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> Interactive 3D Engine Bay + X-Ray View</li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> 3D Sensor Puck Close-Ups &amp; Pinouts</li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> Shareable WhatsApp Bay Links</li>
+            </ul>
+          </div>
+          <button onclick="selectPlan('Mobile Diagnostician')" class="w-full py-2.5 rounded-xl bg-[#0B132B] hover:bg-[#1E293B] text-white font-bold text-xs sm:text-sm transition cursor-pointer">
+            Start 14-Day Trial
+          </button>
+        </div>
+
+        <!-- Tier 2 (Featured) -->
+        <div class="bg-white border-2 border-[#DC2626] rounded-2xl p-6 shadow-xl flex flex-col justify-between gap-6 relative">
+          <span class="absolute -top-3 right-5 px-3 py-0.5 rounded-full bg-[#DC2626] text-white font-mono text-[10px] font-extrabold uppercase">MOST POPULAR</span>
+          <div>
+            <span class="text-xs font-mono font-bold uppercase text-[#DC2626]">MULTI-BRAND GARAGE</span>
+            <h2 class="text-xl font-extrabold text-[#0B132B] mt-1">Workshop Pro + Scanner Bridge</h2>
+            <div class="mt-4 flex items-baseline gap-1">
+              <span class="text-3xl font-black font-mono text-[#DC2626]">₹2,499</span>
+              <span class="text-xs font-mono text-gray-500">/ month (5 bays)</span>
+            </div>
+            <ul class="mt-5 flex flex-col gap-2.5 text-xs sm:text-sm text-gray-700">
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> Full Indian, Korean, Japanese, German &amp; Chinese Index</li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> <strong>XTOOL / Launch / Autel DTC Jump Bridge</strong></li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> Oscilloscope Waveform Reference Library</li>
+              <li class="flex items-center gap-2"><span class="text-[#DC2626] font-bold">✓</span> 48-Hour Priority OEM Manual Ingestion</li>
+            </ul>
+          </div>
+          <button onclick="selectPlan('Workshop Pro')" class="w-full py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-xs sm:text-sm transition shadow-md shadow-red-600/25 cursor-pointer">
+            Activate Workshop Pro
+          </button>
+        </div>
+
+        <!-- Tier 3 -->
+        <div class="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex flex-col justify-between gap-6">
+          <div>
+            <span class="text-xs font-mono font-bold uppercase text-[#1D4ED8]">IAD TRAINING &amp; FLEETS</span>
+            <h2 class="text-xl font-extrabold text-[#0B132B] mt-1">Academy &amp; Fleet License</h2>
+            <div class="mt-4 flex items-baseline gap-1">
+              <span class="text-3xl font-black font-mono text-[#0B132B]">Custom</span>
+              <span class="text-xs font-mono text-gray-500">/ annual pack</span>
+            </div>
+            <ul class="mt-5 flex flex-col gap-2.5 text-xs sm:text-sm text-gray-700">
+              <li class="flex items-center gap-2"><span class="text-[#1D4ED8] font-bold">✓</span> Classroom 3D Projection &amp; Instructor Mode</li>
+              <li class="flex items-center gap-2"><span class="text-[#1D4ED8] font-bold">✓</span> Simulated P-Code Fault Training Drills</li>
+              <li class="flex items-center gap-2"><span class="text-[#1D4ED8] font-bold">✓</span> Commercial Diesel &amp; EV Sensor Modules</li>
+              <li class="flex items-center gap-2"><span class="text-[#1D4ED8] font-bold">✓</span> Dedicated Technical Support Line</li>
+            </ul>
+          </div>
+          <button onclick="selectPlan('Academy & Fleet License')" class="w-full py-2.5 rounded-xl bg-[#1D4ED8] hover:bg-blue-800 text-white font-bold text-xs sm:text-sm transition cursor-pointer">
+            Request Academy Demo
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- JOB CARD / SHAREABLE BAY SHEET MODAL                                  -->
+  <!-- ===================================================================== -->
+  <!-- CSV / GOOGLE SHEET LIVE CATALOG IMPORTER MODAL                        -->
+  <!-- ===================================================================== -->
+  <div id="csvImportModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="bg-white border border-gray-200 rounded-2xl max-w-2xl w-full p-5 shadow-2xl flex flex-col gap-4">
+      <div class="flex items-center justify-between border-b border-gray-200 pb-3">
+        <div>
+          <span class="text-[10px] font-mono font-bold uppercase text-[#1D4ED8]">GOOGLE SHEETS / CSV LIVE BRIDGE</span>
+          <h3 class="text-base font-extrabold text-[#0B132B]">Sync <code class="font-mono text-[#DC2626]">indian_cars_specs_catalog</code> Rows</h3>
+        </div>
+        <button onclick="closeCsvImportModal()" class="p-1.5 rounded-lg bg-gray-100 text-gray-600 hover:text-black cursor-pointer">✕</button>
+      </div>
+
+      <p class="text-xs text-gray-600 leading-relaxed">
+        Paste rows directly from your Google Sheet (<code class="font-mono text-[11px] bg-gray-100 px-1 rounded">Brand, Model, Body_Type, Fuel_Types, CC_Range, Transmissions, Powertrain_Notes, OEM_Manual_Portal_URL</code>) or upload a <code class="font-mono text-[11px] bg-gray-100 px-1 rounded">.csv</code> file to add new vehicles immediately.
+      </p>
+
+      <div class="flex items-center gap-2">
+        <input id="csvFileUpload" type="file" accept=".csv,.txt" class="text-xs font-mono text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-[#1D4ED8] hover:file:bg-blue-100 cursor-pointer" />
+      </div>
+
+      <textarea id="csvPasteArea" rows="7" placeholder="Brand,Model,Body_Type,Fuel_Types,CC_Range,Transmissions,Powertrain_Notes,OEM_Manual_Portal_URL&#10;BYD,Atto 3,SUV,Electric,N/A (EV),Single-Speed Auto,Blade Battery 60.48 kWh 150kW,https://www.bydautoindia.com" class="w-full bg-gray-50 border border-gray-300 rounded-xl p-3 text-xs font-mono text-[#111827] focus:border-[#DC2626] focus:outline-none"></textarea>
+
+      <div class="flex items-center justify-end gap-2">
+        <button onclick="closeCsvImportModal()" class="px-4 py-2 rounded-xl bg-gray-100 text-xs font-bold text-gray-700 hover:bg-gray-200 cursor-pointer">
+          Cancel
+        </button>
+        <button onclick="processCsvImport()" class="px-4 py-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold text-xs transition cursor-pointer">
+          Merge Into 3D Catalog
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =========================================================================
+     * 1. PARAMETRIC 3D POWERTRAIN ARCHITECTURES & SENSOR PUCK TOPOLOGY
+     * =========================================================================
+     */
+    const POWERTRAIN_ARCHITECTURES = {
+      K_SERIES_NA: {
+        id: 'K_SERIES_NA',
+        label: 'K-Series / Z12E Naturally Aspirated & S-CNG',
+        region: 'Indian',
+        flag: '🇮🇳',
+        vinSample: 'MA3EJKD1S00849210',
+        wmiOrigin: 'India (MA3 • Maruti / Toyota)',
+        architecture: 'Inline-3/4 DOHC DualJet / VVT • Transverse FWD',
+        sensors: [
+          {
+            id: 'ckp',
+            code: 'CKP',
+            name: 'Crankshaft Position Sensor',
+            dtcs: ['P0335', 'P0336', 'P0339'],
+            oemPart: '33220-81P10-000',
+            puckStyle: 'barrel_angled',
+            puckLabel: 'Hall-Effect Barrel + 90° Plug',
+            zone: 'Rear Lower Block • Bellhousing Flange',
+            pos3d: { x: 1.55, y: -0.52, z: 0.72 },
+            rot3d: { x: 0.3, y: 0.4, z: -0.2 },
+            camPreset: 'rear',
+            torque: '10mm • 8.5 Nm',
+            tools: ['10mm Deep Socket', '1/4" Ratchet + 3" Ext', 'Flat Pick'],
+            locationDesc: 'Mounted on the rear lower aluminum crankcase facing the flywheel reluctor ring on the intake side, tucked directly beneath the starter motor.',
+            accessSteps: [
+              'Disconnect negative battery terminal (10mm) to avoid shorting the adjacent starter B+ stud.',
+              'Remove air cleaner box (2x 10mm bolts) for upper arm reach, or access from under lift.',
+              'Release grey connector lock tab, unplug 3-pin harness, and undo single 10mm bolt.'
+            ],
+            circuitType: 'Hall-Effect (3-Wire)',
+            koeoVal: 'Pin 1: 5.0V ± 0.1V',
+            ohmsVal: 'Active IC (Do Not Ohm)',
+            waveVal: '0V–5V Digital Square',
+            pins: [
+              { num: 1, label: '5V REF', color: '#DC2626', wire: 'Red/Blue' },
+              { num: 2, label: 'CKP SIG', color: '#38BDF8', wire: 'Yellow/Blk' },
+              { num: 3, label: 'GND', color: '#94A3B8', wire: 'Black/Wht' }
+            ],
+            failureTrap: 'Do not replace blindly on P0335! On K12N/Z12E engines, the harness loom chafes against the lower starter bracket, shorting the 5V reference line.'
+          },
+          {
+            id: 'cmp',
+            code: 'CMP',
+            name: 'Camshaft Position Sensor (Intake VVT)',
+            dtcs: ['P0340', 'P0341'],
+            oemPart: '33220-69L00-000',
+            puckStyle: 'barrel_straight',
+            puckLabel: 'VVT Cam Probe + Flange',
+            zone: 'Cylinder Head Rear • Valve Cover Corner',
+            pos3d: { x: 1.35, y: 0.92, z: 0.42 },
+            rot3d: { x: 0, y: 0.2, z: -0.4 },
+            camPreset: 'rear',
+            torque: '10mm • 8.0 Nm',
+            tools: ['10mm Socket', '1/4" Ratchet'],
+            locationDesc: 'Seated on the gearbox-end corner of the cylinder head, reading the intake camshaft timing target wheel.',
+            accessSteps: [
+              'Locate sensor on the transmission side of the cylinder head behind ignition coil #4.',
+              'Slide red secondary lock back, depress connector latch, and undo 10mm bolt.'
+            ],
+            circuitType: 'Hall-Effect VVT Sync',
+            koeoVal: 'Pin 3: 12.0V | Pin 2: 5.0V',
+            ohmsVal: 'Active IC',
+            waveVal: '0V–5V Variable Duty',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Black' },
+              { num: 2, label: 'CMP SIG', color: '#38BDF8', wire: 'Green/Wht' },
+              { num: 3, label: '12V IGN', color: '#FACC15', wire: 'Pink/Blk' }
+            ],
+            failureTrap: 'Low engine oil level or a sludged VVT oil control solenoid frequently triggers false P0340 cam/crank correlation codes.'
+          },
+          {
+            id: 'map',
+            code: 'MAP / IAT',
+            name: 'Manifold Absolute Pressure & IAT Sensor',
+            dtcs: ['P0106', 'P0107', 'P0113'],
+            oemPart: '18590-72F21-000',
+            puckStyle: 'box_map',
+            puckLabel: 'Bosch-Style Rectangular TMAP Puck',
+            zone: 'Top Center • Composite Intake Plenum',
+            pos3d: { x: -0.15, y: 0.72, z: 1.18 },
+            rot3d: { x: 0.4, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: 'T25 Torx • 5.0 Nm',
+            tools: ['T25 Torx Driver', 'MAF/Intake Cleaner'],
+            locationDesc: 'Bolted onto the upper center ridge of the black composite intake manifold plenum downstream of the throttle body.',
+            accessSteps: [
+              'Open hood; sensor is directly visible on top of the black intake plenum.',
+              'Unclip 4-pin connector, undo T25 Torx screw, and twist gently to free Viton O-ring.'
+            ],
+            circuitType: 'Piezo-Resistive + NTC IAT',
+            koeoVal: 'KOEO: ~3.9V | Idle: 1.15V',
+            ohmsVal: 'IAT Pins 1-2: 2.2kΩ @ 25°C',
+            waveVal: '0.5V–4.5V Analog DC',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown/Blk' },
+              { num: 2, label: 'IAT SIG', color: '#FACC15', wire: 'Orange' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 4, label: 'MAP SIG', color: '#38BDF8', wire: 'Light Green' }
+            ],
+            failureTrap: 'BS6 EGR soot clogs the tiny pressure port under the MAP sensor, causing sluggish throttle response and P0106 barometric drift.'
+          },
+          {
+            id: 'knock',
+            code: 'KS1',
+            name: 'Piezoelectric Knock Sensor (Hidden)',
+            dtcs: ['P0325', 'P0327'],
+            oemPart: '18640-78G00-000',
+            puckStyle: 'donut_knock',
+            puckLabel: 'Ring-Type Piezo Donut + Center Bolt',
+            zone: 'Mid Cylinder Block • Under Intake Runners',
+            pos3d: { x: 0.15, y: 0.05, z: 0.62 },
+            rot3d: { x: Math.PI / 2, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: '12mm Center Bolt • 20 Nm',
+            tools: ['12mm Deep Socket', 'Torque Wrench (Mandatory)'],
+            locationDesc: 'Bolted flat against the machined boss between Cylinders #2 and #3 on the intake side of the block—hidden underneath the intake manifold runners (Toggle X-Ray Block to see clearly!).',
+            accessSteps: [
+              'Toggle "X-Ray Block" in the 3D toolbar to see exact position behind intake runners #2 & #3.',
+              'Reach from underneath or remove intake plenum for clear torque wrench access.',
+              'Torque center bolt strictly to 20 Nm—over-tightening cracks the piezo crystal.'
+            ],
+            circuitType: 'Flat-Response Piezoelectric',
+            koeoVal: '2.5V Bias (2-Wire)',
+            ohmsVal: '4.8 MΩ – 5.2 MΩ',
+            waveVal: 'AC mV Knock Burst',
+            pins: [
+              { num: 1, label: 'KS + SIG', color: '#38BDF8', wire: 'White' },
+              { num: 2, label: 'KS - GND', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Never use an impact gun or over-torque a knock sensor! Incorrect clamping torque alters acoustic sensitivity and triggers false timing retard.'
+          },
+          {
+            id: 'o2_b1s1',
+            code: 'O2 B1S1',
+            name: 'Upstream Wideband Air/Fuel Sensor',
+            dtcs: ['P0135', 'P0130', 'P2237'],
+            oemPart: '18213-68P00-000',
+            puckStyle: 'hex_o2',
+            puckLabel: '22mm Hex Exhaust Probe + Shielded Lead',
+            zone: 'Front Exhaust Manifold • Pre-Catalyst',
+            pos3d: { x: -0.35, y: 0.25, z: -1.15 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '22mm Hex • 42 Nm',
+            tools: ['22mm Slotted O2 Socket', '3/8" Breaker Bar'],
+            locationDesc: 'Threaded vertically into the upper exhaust manifold collector directly above the primary catalytic converter.',
+            accessSteps: [
+              'Unclip 4-pin grey connector bracket near radiator fan shroud.',
+              'Slide 22mm slotted O2 socket over sensor body and break loose counter-clockwise.'
+            ],
+            circuitType: 'Planar Wideband AFR (4-Wire)',
+            koeoVal: 'Heater: 12V | Ref: 3.3V',
+            ohmsVal: 'Heater Pins 3-4: 3.4Ω @ 20°C',
+            waveVal: 'Closed-Loop Pump Current',
+            pins: [
+              { num: 1, label: 'VS+ SIG', color: '#38BDF8', wire: 'Blue' },
+              { num: 2, label: 'IP+ PUMP', color: '#FACC15', wire: 'White' },
+              { num: 3, label: 'HTR +12V', color: '#DC2626', wire: 'Black' },
+              { num: 4, label: 'HTR GND', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'P0135 heater circuit fault is often a blown 15A IG2/O2 fuse in the under-hood fuse box rather than a failed sensor.'
+          },
+          {
+            id: 'ect',
+            code: 'ECT',
+            name: 'Engine Coolant Temperature Sensor',
+            dtcs: ['P0117', 'P0118', 'P0125'],
+            oemPart: '13650-73H00-000',
+            puckStyle: 'brass_ect',
+            puckLabel: 'Brass NTC Probe + 19mm Hex',
+            zone: 'Cylinder Head Outlet • Thermostat Housing',
+            pos3d: { x: 1.15, y: 0.35, z: 0.78 },
+            rot3d: { x: 0, y: 0.5, z: 0 },
+            camPreset: 'rear',
+            torque: '19mm Deep • 18 Nm',
+            tools: ['19mm Deep Socket', 'Coolant Catch Pan'],
+            locationDesc: 'Screwed into the aluminum coolant outlet housing on the gearbox side of the cylinder head.',
+            accessSteps: [
+              'Verify engine is cold before opening cooling system.',
+              'Unclip 2-pin grey connector, unthread with 19mm deep socket, and bleed air after refill.'
+            ],
+            circuitType: 'NTC Thermistor (2-Wire)',
+            koeoVal: '20°C: ~3.4V | 90°C: ~0.6V',
+            ohmsVal: '20°C: 2.45kΩ | 80°C: 318Ω',
+            waveVal: 'Smooth Analog Voltage Decay',
+            pins: [
+              { num: 1, label: 'ECT SIG', color: '#38BDF8', wire: 'Yellow/Grn' },
+              { num: 2, label: 'GND', color: '#94A3B8', wire: 'Brown' }
+            ],
+            failureTrap: 'Trapped air pockets after coolant replacement cause erratic radiator fan cycling and false P0117 spikes.'
+          },
+          {
+            id: 'cng_rail',
+            code: 'CNG P/T',
+            name: 'CNG Low-Pressure Rail & Temp Sensor',
+            dtcs: ['P0191', 'P0087', 'P1612'],
+            cngOnly: true,
+            oemPart: '18590-81P50-CNG',
+            puckStyle: 'brass_ect',
+            puckLabel: 'CNG Injector Rail Pressure/Temp Puck',
+            zone: 'Upper Fuel Rail • CNG Injector Gallery',
+            pos3d: { x: 0.45, y: 0.96, z: 0.78 },
+            rot3d: { x: 0.2, y: 0, z: 0 },
+            camPreset: 'top',
+            torque: '17mm Wrench • 15 Nm',
+            tools: ['17mm Open-End Wrench', 'Soap Leak Spray'],
+            locationDesc: 'Threaded into the end of the aluminum CNG injector rail mounted above the intake manifold runners.',
+            accessSteps: [
+              'Close manual shut-off valve on the boot CNG cylinder and run engine until it switches to Petrol.',
+              'Unclip 4-pin CNG ECU harness and unthread sensor from rail end-cap.'
+            ],
+            circuitType: 'Piezo Gas Pressure + NTC (4-Wire)',
+            koeoVal: 'Regulated Rail: 2.0–2.4 bar (~2.1V)',
+            ohmsVal: 'Gas Temp: 2.2kΩ @ 25°C',
+            waveVal: 'Analog Gas Rail Pressure',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Black' },
+              { num: 2, label: 'GAS TEMP', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 4, label: 'RAIL PRESS', color: '#38BDF8', wire: 'Blue' }
+            ],
+            failureTrap: 'Oily compressor residue from CNG filling stations fouls the pressure diaphragm—drain the CNG filter bowl every 20,000 km!'
+          }
+        ]
+      },
+
+      REVOTRON_TURBO: {
+        id: 'REVOTRON_TURBO',
+        label: 'Turbo Petrol GDI / Revotron / mStallion',
+        region: 'Indian',
+        flag: '🇮🇳',
+        vinSample: 'MAT627145NKP48219',
+        wmiOrigin: 'India (MAT / MA1 / MAL)',
+        architecture: 'Inline-3/4 DOHC Turbocharged GDI • Intercooled',
+        sensors: [
+          {
+            id: 'ckp',
+            code: 'CKP',
+            name: 'Crankshaft Position Sensor',
+            dtcs: ['P0335', 'P0336'],
+            oemPart: '279015409908',
+            puckStyle: 'barrel_angled',
+            puckLabel: 'Bosch Hall-Effect Crank Puck',
+            zone: 'Lower Rear Block • Flywheel Housing',
+            pos3d: { x: 1.52, y: -0.50, z: 0.72 },
+            rot3d: { x: 0.3, y: 0.4, z: -0.2 },
+            camPreset: 'rear',
+            torque: '10mm • 8.5 Nm',
+            tools: ['10mm Socket', '1/4" Ratchet'],
+            locationDesc: 'Mounted on the rear lower crankcase flange facing the 60-2 flywheel reluctor wheel.',
+            accessSteps: [
+              'Access from under chassis behind radiator fan shroud / lower splash shield.',
+              'Unclip 3-pin Bosch connector and remove 10mm bolt.'
+            ],
+            circuitType: 'Hall-Effect (3-Wire)',
+            koeoVal: 'Pin 1: 5.0V | Pin 2: 0–5V',
+            ohmsVal: 'Active IC',
+            waveVal: '0V–5V Digital Square Wave',
+            pins: [
+              { num: 1, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 2, label: 'CKP SIG', color: '#38BDF8', wire: 'Green' },
+              { num: 3, label: 'GND', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Check the earth ground strap on the gearbox bellhousing—high resistance causes cranking sync dropouts on downsized turbo engines.'
+          },
+          {
+            id: 'map',
+            code: 'TMAP',
+            name: 'Turbo Boost Pressure & IAT Sensor',
+            dtcs: ['P0106', 'P0236'],
+            oemPart: '279054209901',
+            puckStyle: 'box_map',
+            puckLabel: 'Bosch 3-Bar TMAP Sensor Puck',
+            zone: 'Composite Intake Plenum • Top Center',
+            pos3d: { x: -0.10, y: 0.74, z: 1.18 },
+            rot3d: { x: 0.4, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: 'T25 Torx • 5.0 Nm',
+            tools: ['T25 Torx Driver', 'Intake Cleaner'],
+            locationDesc: 'Mounted on top of the black composite intake manifold downstream of the throttle valve.',
+            accessSteps: [
+              'Remove top acoustic cover.',
+              'Release Bosch yellow lock tab, unplug 4-pin connector, and undo T25 screw.'
+            ],
+            circuitType: 'Bosch 3-Bar TMAP',
+            koeoVal: 'KOEO: ~1.55V | Boost: 4.1V',
+            ohmsVal: 'IAT: 2.2kΩ @ 25°C',
+            waveVal: 'Analog Boost Voltage',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 2, label: 'IAT SIG', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 4, label: 'BOOST SIG', color: '#38BDF8', wire: 'Blue' }
+            ],
+            failureTrap: 'Oil mist from the PCV breather coats the TMAP sensing tip—clean gently with MAF cleaner before replacing.'
+          },
+          {
+            id: 'frp',
+            code: 'FRP (GDI)',
+            name: 'GDI High-Pressure Fuel Rail Sensor',
+            dtcs: ['P0190', 'P0191', 'P0087'],
+            oemPart: '279015409922',
+            puckStyle: 'brass_ect',
+            puckLabel: '200-Bar Stainless GDI Rail Sensor',
+            zone: 'Under Intake Plenum • High-Pressure Fuel Rail',
+            pos3d: { x: 0.55, y: 0.35, z: 0.85 },
+            rot3d: { x: 0.2, y: 0.3, z: 0 },
+            camPreset: 'intake',
+            torque: '27mm Deep • 35 Nm',
+            tools: ['27mm Deep Socket', 'Scan Tool Fuel Depressurize'],
+            locationDesc: 'Threaded directly into the stainless steel GDI common fuel rail beneath the intake manifold runners.',
+            accessSteps: [
+              'MANDATORY: Run fuel rail pressure release routine via scan tool before loosening.',
+              'Unclip 3-pin connector and remove with 27mm deep socket.'
+            ],
+            circuitType: '200-Bar Piezo Rail Sensor',
+            koeoVal: 'Idle: 45–60 bar (~1.4V) | WOT: 200 bar',
+            ohmsVal: 'Active Strain Gauge',
+            waveVal: '0.5V–4.5V Rail Pressure',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 2, label: 'FRP SIG', color: '#38BDF8', wire: 'White' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red' }
+            ],
+            failureTrap: 'Never crack a GDI fuel line open while hot—residual rail pressure exceeds 150 bar!'
+          },
+          {
+            id: 'knock',
+            code: 'KS1',
+            name: 'Acoustic Knock Sensor',
+            dtcs: ['P0325', 'P0328'],
+            oemPart: '279015409914',
+            puckStyle: 'donut_knock',
+            puckLabel: 'Piezo Ring Sensor + M8 Bolt',
+            zone: 'Engine Block Side • Below Intake',
+            pos3d: { x: 0.12, y: 0.05, z: 0.62 },
+            rot3d: { x: Math.PI / 2, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: '13mm • 20 Nm',
+            tools: ['13mm Deep Socket', 'Torque Wrench'],
+            locationDesc: 'Bolted centrally on the intake side of the cylinder block beneath the intake plenum.',
+            accessSteps: [
+              'Enable X-Ray Block to see sensor behind intake runners.',
+              'Remove M8 bolt and torque replacement strictly to 20 Nm.'
+            ],
+            circuitType: 'Piezoelectric (2-Wire)',
+            koeoVal: '2.5V Bias',
+            ohmsVal: '4.9 MΩ',
+            waveVal: 'AC Knock Signal',
+            pins: [
+              { num: 1, label: 'KS +', color: '#38BDF8', wire: 'White' },
+              { num: 2, label: 'KS -', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Inspect connector near alternator bracket for heat-brittle insulation.'
+          },
+          {
+            id: 'o2_b1s1',
+            code: 'O2 B1S1',
+            name: 'Upstream Wideband Lambda Sensor',
+            dtcs: ['P0135', 'P2237'],
+            oemPart: '279014109904',
+            puckStyle: 'hex_o2',
+            puckLabel: 'Bosch LSU 4.9 22mm Hex Probe',
+            zone: 'Turbocharger Turbine Outlet • Front',
+            pos3d: { x: -0.35, y: 0.25, z: -1.18 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '22mm • 45 Nm',
+            tools: ['22mm Slotted O2 Socket'],
+            locationDesc: 'Threaded into the cast turbocharger outlet elbow just above the catalytic converter.',
+            accessSteps: [
+              'Unclip 4-pin black connector near fan shroud.',
+              'Remove sensor with 22mm slotted O2 socket.'
+            ],
+            circuitType: 'Bosch LSU 4.9 Wideband',
+            koeoVal: 'Heater: 12V',
+            ohmsVal: 'Heater: 3.1 Ω',
+            waveVal: 'Pump Current',
+            pins: [
+              { num: 1, label: 'IP+', color: '#38BDF8', wire: 'Red' },
+              { num: 2, label: 'VS+', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: 'HTR +', color: '#DC2626', wire: 'White' },
+              { num: 4, label: 'HTR -', color: '#94A3B8', wire: 'Grey' }
+            ],
+            failureTrap: 'Check turbo wastegate actuator play before condemning upstream O2 on mixture trim codes.'
+          }
+        ]
+      },
+
+      CRDI_DIESEL: {
+        id: 'CRDI_DIESEL',
+        label: 'Common-Rail Turbo Diesel (CRDi / mHawk / Kryotec)',
+        region: 'Indian',
+        flag: '🇮🇳',
+        vinSample: 'MA1TA2W42N2C18490',
+        wmiOrigin: 'India/Korea (MA1 / MAL / MAT)',
+        architecture: 'Inline-4 DOHC CRDi • VGT Turbo + DPF/SCR',
+        sensors: [
+          {
+            id: 'ckp',
+            code: 'CKP',
+            name: 'Crankshaft Position Sensor',
+            dtcs: ['P0335', 'P0336'],
+            oemPart: '39180-2A910 / 0306CM0241N',
+            puckStyle: 'barrel_angled',
+            puckLabel: 'Bosch Diesel Crank Sensor Puck',
+            zone: 'Rear Bellhousing • Crankcase Web',
+            pos3d: { x: 1.54, y: -0.48, z: 0.74 },
+            rot3d: { x: 0.3, y: 0.4, z: -0.2 },
+            camPreset: 'rear',
+            torque: '10mm • 9.0 Nm',
+            tools: ['10mm Socket', '6" Extension'],
+            locationDesc: 'Mounted on the rear crankcase flange reading the flywheel tone ring beside the oil cooler.',
+            accessSteps: [
+              'Access from under chassis beside transmission bellhousing.',
+              'Unplug 3-pin Bosch connector and undo 10mm bolt.'
+            ],
+            circuitType: 'Hall-Effect / Inductive (3-Wire)',
+            koeoVal: 'Pin 1: 5.0V | Pin 2: 0–5V',
+            ohmsVal: '860 Ω (Inductive) / Active IC',
+            waveVal: '0V–5V Digital Square Wave',
+            pins: [
+              { num: 1, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 2, label: 'CKP SIG', color: '#38BDF8', wire: 'Green' },
+              { num: 3, label: 'GND', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Metal particles from dual-mass flywheel wear cling to magnetic crank tips and distort high-RPM sync.'
+          },
+          {
+            id: 'frp',
+            code: 'FRP (1800 BAR)',
+            name: 'Common-Rail Fuel Pressure Sensor',
+            dtcs: ['P0191', 'P0192', 'P0087', 'P0088'],
+            oemPart: '0281006325',
+            puckStyle: 'brass_ect',
+            puckLabel: 'Bosch 1800-Bar Common Rail Sensor',
+            zone: 'High-Pressure Fuel Rail • Intake Side',
+            pos3d: { x: 0.45, y: 0.48, z: 0.85 },
+            rot3d: { x: 0.2, y: 0.3, z: 0 },
+            camPreset: 'intake',
+            torque: '27mm Deep • 70 Nm',
+            tools: ['27mm Deep Socket', 'Torque Wrench'],
+            locationDesc: 'Screwed into the forged steel common-rail fuel accumulator gallery on the intake side of the cylinder head.',
+            accessSteps: [
+              'Wait 5 minutes after key-off so rail pressure bleeds down to 0 bar.',
+              'Unclip 3-pin Bosch connector and unthread with 27mm deep socket.'
+            ],
+            circuitType: 'Bosch 1800-Bar Strain Gauge',
+            koeoVal: 'KOEO: 0.50V | Idle (300 bar): ~1.35V',
+            ohmsVal: 'Active Bridge Circuit',
+            waveVal: '0.5V–4.5V Analog Pressure',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 2, label: 'RAIL SIG', color: '#38BDF8', wire: 'Yellow' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red' }
+            ],
+            failureTrap: 'Low rail pressure (P0087) is usually a clogged diesel fuel filter or leaking injector back-leak—check return flow before replacing the sensor!'
+          },
+          {
+            id: 'map',
+            code: 'BOOST / TMAP',
+            name: 'Turbo Boost Pressure & IAT Sensor',
+            dtcs: ['P0106', 'P0236', 'P0234'],
+            oemPart: '39300-2A650',
+            puckStyle: 'box_map',
+            puckLabel: 'Bosch 3.5-Bar Diesel TMAP Puck',
+            zone: 'Intake Manifold Plenum • Post-EGR',
+            pos3d: { x: 0.25, y: 0.72, z: 1.15 },
+            rot3d: { x: 0.4, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: '10mm / T25 • 7.5 Nm',
+            tools: ['10mm Socket', 'Carbon Cleaner Pick'],
+            locationDesc: 'Mounted on top of the intake manifold plenum downstream of the intercooler and EGR mixer pipe.',
+            accessSteps: [
+              'Pull off acoustic top engine cover.',
+              'Unclip 4-pin connector, remove mounting bolt, and clean heavy diesel EGR soot from port.'
+            ],
+            circuitType: '3.5-Bar Piezo Boost + NTC IAT',
+            koeoVal: 'KOEO: ~1.55V | Boost: 4.1V',
+            ohmsVal: 'IAT: 2.5kΩ @ 20°C',
+            waveVal: 'Analog Boost Voltage',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 2, label: 'IAT SIG', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Pink' },
+              { num: 4, label: 'BOOST SIG', color: '#38BDF8', wire: 'Blue' }
+            ],
+            failureTrap: '90% of P0236 faults on BS6 CRDi diesels are caused by thick EGR carbon blocking the sensor orifice—clean it before replacing!'
+          },
+          {
+            id: 'dpf_diff',
+            code: 'DPF ΔP',
+            name: 'DPF Differential Pressure Sensor',
+            dtcs: ['P2452', 'P2453', 'P2463'],
+            oemPart: '39210-2A800',
+            puckStyle: 'box_map',
+            puckLabel: 'Dual-Port DPF Soot Delta-P Sensor',
+            zone: 'Exhaust / Firewall Bracket • Dual Silicone Hoses',
+            pos3d: { x: 0.35, y: 0.42, z: -1.12 },
+            rot3d: { x: -0.2, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '10mm • 8.0 Nm',
+            tools: ['10mm Socket', 'Hose Clamp Pliers'],
+            locationDesc: 'Mounted near the exhaust DPF canister with upstream (high-pressure) and downstream (low-pressure) reference hoses.',
+            accessSteps: [
+              'Inspect both silicone hoses for heat cracks or soot blockage before removing sensor.',
+              'Run "DPF Differential Pressure Reset" via scan tool after replacement.'
+            ],
+            circuitType: 'Differential Piezo Pressure (3-Pin)',
+            koeoVal: 'KOEO: 0.50V (0 kPa Delta)',
+            ohmsVal: 'Active IC',
+            waveVal: '0.5V–4.5V Soot Load Signal',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Black' },
+              { num: 2, label: '5V REF', color: '#DC2626', wire: 'Red' },
+              { num: 3, label: 'ΔP SIG', color: '#38BDF8', wire: 'Green' }
+            ],
+            failureTrap: 'A cracked upstream silicone hose reads 0 kPa delta pressure, preventing automatic DPF regeneration until the filter clogs solid!'
+          },
+          {
+            id: 'o2_b1s1',
+            code: 'UEGO B1S1',
+            name: 'Wideband Lambda Sensor (Pre-DOC/DPF)',
+            dtcs: ['P0135', 'P2243'],
+            oemPart: '39350-2A900',
+            puckStyle: 'hex_o2',
+            puckLabel: '5-Wire LSU 4.9 Exhaust Probe',
+            zone: 'VGT Turbo Outlet Elbow • Front',
+            pos3d: { x: -0.45, y: 0.15, z: -1.25 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '22mm • 45 Nm',
+            tools: ['22mm Flare O2 Socket', '10mm Socket'],
+            locationDesc: 'Screwed into the cast iron turbine outlet elbow directly downstream of the VGT turbocharger.',
+            accessSteps: [
+              'Remove upper turbo heat shield (3x 10mm bolts).',
+              'Unclip harness from valve cover bracket and remove with 22mm O2 socket.'
+            ],
+            circuitType: '5-Wire LSU 4.9 Wideband',
+            koeoVal: 'Nernst Cell: 0.45V Bias',
+            ohmsVal: 'Heater: 3.1 Ω @ 25°C',
+            waveVal: 'Closed-Loop Lambda Current',
+            pins: [
+              { num: 1, label: 'APE / IP', color: '#38BDF8', wire: 'Red' },
+              { num: 2, label: 'VS / UN', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: 'HTR +12V', color: '#DC2626', wire: 'White' },
+              { num: 4, label: 'HTR -', color: '#94A3B8', wire: 'Grey' }
+            ],
+            failureTrap: 'A stuck-open EGR valve coats the LSU 4.9 thimble in dry soot and triggers failed DPF regenerations.'
+          }
+        ]
+      },
+
+      HONDA_IVTEC: {
+        id: 'HONDA_IVTEC',
+        label: 'Honda i-VTEC / Toyota Hybrid Atkinson DOHC',
+        region: 'Japanese',
+        flag: '🇯🇵',
+        vinSample: 'MAKGM6690KN104582',
+        wmiOrigin: 'India/Japan (MAK / JHM / MBJ)',
+        architecture: 'Inline-4 DOHC i-VTEC / e-CVT Hybrid • Front Timing CKP',
+        sensors: [
+          {
+            id: 'ckp',
+            code: 'CKP',
+            name: 'Crankshaft Position Sensor (Front Timing)',
+            dtcs: ['P0335', 'P0339'],
+            oemPart: '37500-5R1-003',
+            puckStyle: 'barrel_angled',
+            puckLabel: 'Front Timing Cover Crank Puck',
+            zone: 'Front Timing Cover • Behind Crank Pulley',
+            pos3d: { x: -1.48, y: -0.52, z: 0.48 },
+            rot3d: { x: 0, y: -0.6, z: 0 },
+            camPreset: 'front',
+            torque: '10mm • 9.8 Nm',
+            tools: ['10mm Socket', 'Trim Clip Remover', 'OBD Scan Tool'],
+            locationDesc: 'Unlike rear-flywheel layouts, Honda L15 & Toyota Hybrid engines mount the CKP sensor on the LOWER FRONT timing chain cover right behind the crankshaft pulley!',
+            accessSteps: [
+              'Turn steering full right or remove RH front wheel and inner splash liner.',
+              'Unbolt metal debris shield (1x 10mm bolt) protecting the CKP sensor.',
+              'CRITICAL: Run "CKP Pattern Clear / Learn" on your scanner after replacement.'
+            ],
+            circuitType: 'Hall-Effect (3-Wire)',
+            koeoVal: 'Pin 3: 5.0V | Pin 1: 0–5V',
+            ohmsVal: 'Active IC',
+            waveVal: '0V–5V Digital Square Wave',
+            pins: [
+              { num: 1, label: 'CKP SIG', color: '#38BDF8', wire: 'Blue' },
+              { num: 2, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Yellow/Blk' }
+            ],
+            failureTrap: 'After replacing a Honda L15 CKP sensor, you MUST execute "CKP Pattern Clear" via your diagnostic scanner or random misfire codes will persist!'
+          },
+          {
+            id: 'map',
+            code: 'MAP',
+            name: 'Manifold Absolute Pressure Sensor',
+            dtcs: ['P0106', 'P0107'],
+            oemPart: '37830-RNA-A01',
+            puckStyle: 'box_map',
+            puckLabel: 'Denso Throttle-Neck MAP Puck',
+            zone: 'Throttle Body Neck • Top Intake',
+            pos3d: { x: -0.65, y: 0.78, z: 0.98 },
+            rot3d: { x: 0.4, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: 'M5 Screw • 4.5 Nm',
+            tools: ['JIS #2 Screwdriver', 'Throttle Cleaner'],
+            locationDesc: 'Seated directly on top of the intake manifold throat immediately behind the electronic throttle body.',
+            accessSteps: [
+              'Unclip 3-pin connector on top of throttle neck.',
+              'Remove single mounting screw and pull sensor straight up.'
+            ],
+            circuitType: 'Piezo-Resistive (3-Wire)',
+            koeoVal: 'KOEO: 2.9V | Idle: 1.02V',
+            ohmsVal: 'Active IC',
+            waveVal: 'Linear Analog DC',
+            pins: [
+              { num: 1, label: 'MAP SIG', color: '#38BDF8', wire: 'Light Green' },
+              { num: 2, label: 'GND', color: '#94A3B8', wire: 'Green/Wht' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Yellow/Red' }
+            ],
+            failureTrap: 'Carbon buildup on the throttle plate alters idle airflow and causes false P0106 MAP performance codes.'
+          },
+          {
+            id: 'o2_b1s1',
+            code: 'LAF B1S1',
+            name: 'Primary Linear Air/Fuel Sensor',
+            dtcs: ['P0135', 'P2A00'],
+            oemPart: '36531-5R1-003',
+            puckStyle: 'hex_o2',
+            puckLabel: 'Denso Wideband LAF Probe',
+            zone: 'Integrated Head Collector • Front',
+            pos3d: { x: 0.10, y: 0.18, z: -1.18 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '22mm • 44 Nm',
+            tools: ['22mm O2 Sensor Socket'],
+            locationDesc: 'Mounted right at the single-port cylinder head exhaust collector above the close-coupled catalyst.',
+            accessSteps: [
+              'Unclip grey 4-pin bracket on valve cover so wires do not twist.',
+              'Remove sensor using 22mm slotted socket.'
+            ],
+            circuitType: 'Wideband LAF Sensor',
+            koeoVal: 'Heater: 12V | Stoich: ~2.2V',
+            ohmsVal: 'Heater: 2.8–3.8 Ω',
+            waveVal: 'Linear Air-Fuel Ratio',
+            pins: [
+              { num: 1, label: 'AFS +', color: '#38BDF8', wire: 'White' },
+              { num: 2, label: 'AFS -', color: '#FACC15', wire: 'Red' },
+              { num: 3, label: 'HTR +', color: '#DC2626', wire: 'Black' },
+              { num: 4, label: 'HTR -', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Honda/Toyota ECUs reject generic aftermarket O2 sensors—install Denso/NTK OEM spec.'
+          }
+        ]
+      },
+
+      VAG_TSI: {
+        id: 'VAG_TSI',
+        label: 'VW / Skoda TSI EA211 & MG Turbo GDI',
+        region: 'German',
+        flag: '🇩🇪',
+        vinSample: 'MEXB1960XNT073419',
+        wmiOrigin: 'India/Europe (MEX / WVW / TMB / MZ7)',
+        architecture: 'Inline-3/4 DOHC Direct Injection Turbo • Charge-Air Cooler',
+        sensors: [
+          {
+            id: 'ckp',
+            code: 'G28 (CKP)',
+            name: 'Engine Speed Sensor G28',
+            dtcs: ['P0335', 'P0322'],
+            oemPart: '04C 906 433 E',
+            puckStyle: 'barrel_angled',
+            puckLabel: 'VAG Magneto-Resistive G28 Puck',
+            zone: 'Rear Crank Flange • Encoder Seal',
+            pos3d: { x: 1.52, y: -0.48, z: 0.68 },
+            rot3d: { x: 0.3, y: 0.4, z: -0.2 },
+            camPreset: 'rear',
+            torque: 'T30 Torx • 9.0 Nm',
+            tools: ['T30 Torx Bit', '1/4" Ratchet'],
+            locationDesc: 'Mounted on the gearbox side of the lower crankcase, reading the magnetic encoder ring pressed onto the rear crankshaft seal.',
+            accessSteps: [
+              'Raise vehicle and remove lower noise insulation tray.',
+              'Remove T30 Torx bolt and extract straight out without prying.'
+            ],
+            circuitType: 'Magneto-Resistive (3-Pin)',
+            koeoVal: 'Pin 1: 5.0V | Pin 2: 0–5V',
+            ohmsVal: 'Active IC',
+            waveVal: '0V–5V Digital Pulse',
+            pins: [
+              { num: 1, label: '5V REF', color: '#DC2626', wire: 'Red/Wht' },
+              { num: 2, label: 'G28 SIG', color: '#38BDF8', wire: 'Green' },
+              { num: 3, label: 'GND', color: '#94A3B8', wire: 'Brown' }
+            ],
+            failureTrap: 'Never pry against the rear main seal housing on EA211 engines—warping the PTFE seal ring ruins crank sync.'
+          },
+          {
+            id: 'map',
+            code: 'G71 / G31',
+            name: 'Intake Manifold (G71) & Boost (G31) Sensor',
+            dtcs: ['P0106', 'P0236'],
+            oemPart: '03G 906 051 M',
+            puckStyle: 'box_map',
+            puckLabel: 'Bosch VAG 4-Pin TMAP Puck',
+            zone: 'Charge Air Cooler Intake Plenum',
+            pos3d: { x: 0.15, y: 0.76, z: 1.15 },
+            rot3d: { x: 0.4, y: 0, z: 0 },
+            camPreset: 'intake',
+            torque: 'T20 Torx • 4.5 Nm',
+            tools: ['T20 Torx Driver'],
+            locationDesc: 'Mounted on top of the composite intake manifold containing the integrated water-to-air intercooler core.',
+            accessSteps: [
+              'Release VAG push-pull connector lock.',
+              'Remove 2x T20 Torx screws and inspect O-ring.'
+            ],
+            circuitType: 'Digital SENT / Analog MAP+IAT',
+            koeoVal: 'KOEO: ~1.8V (G31 & G71 match)',
+            ohmsVal: 'Active IC',
+            waveVal: 'Analog / SENT Protocol',
+            pins: [
+              { num: 1, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 2, label: 'IAT SIG', color: '#FACC15', wire: 'Grey' },
+              { num: 3, label: '5V REF', color: '#DC2626', wire: 'Red/Grn' },
+              { num: 4, label: 'G71 SIG', color: '#38BDF8', wire: 'Yellow' }
+            ],
+            failureTrap: 'EA211 uses TWO pressure sensors (G31 pre-throttle, G71 post-throttle). Compare both against Ambient Baro at Key-On before replacing.'
+          },
+          {
+            id: 'o2_b1s1',
+            code: 'G39 (O2)',
+            name: 'Lambda Probe G39 Before Catalyst',
+            dtcs: ['P0135', 'P2237'],
+            oemPart: '04C 906 262 E',
+            puckStyle: 'hex_o2',
+            puckLabel: 'Bosch LSU 4.9 Lambda Probe',
+            zone: 'Turbo Turbine Housing • Rear/Top',
+            pos3d: { x: -0.35, y: 0.28, z: -1.22 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: '22mm • 50 Nm',
+            tools: ['22mm Slotted O2 Socket'],
+            locationDesc: 'Threaded into the cast turbocharger turbine outlet right behind the cylinder head.',
+            accessSteps: [
+              'Unclip 4-pin black connector on bulkhead bracket.',
+              'Unthread G39 probe with 22mm slotted socket.'
+            ],
+            circuitType: 'Bosch LSU 4.9 Wideband',
+            koeoVal: 'Lambda 1.00 = ~1.5V Pump',
+            ohmsVal: 'Heater: 3.0 Ω @ 20°C',
+            waveVal: 'Wideband Current',
+            pins: [
+              { num: 1, label: 'IP+', color: '#38BDF8', wire: 'Red' },
+              { num: 2, label: 'VS+', color: '#FACC15', wire: 'Yellow' },
+              { num: 3, label: 'HTR +12V', color: '#DC2626', wire: 'White' },
+              { num: 4, label: 'HTR PWM', color: '#94A3B8', wire: 'Grey' }
+            ],
+            failureTrap: 'Boost leaks at the turbo charge pipe O-ring trigger rich/lean trim faults (P2177/P2178) that mimic a defective G39 probe.'
+          }
+        ]
+      },
+
+      BEV_POWERTRAIN: {
+        id: 'BEV_POWERTRAIN',
+        label: 'High-Voltage E-Axle & Inverter EV Architecture',
+        region: 'Indian',
+        flag: '⚡',
+        vinSample: 'MAT631092EVB04192',
+        wmiOrigin: 'EV E-Axle (acti.ev / INGLO / Blade)',
+        architecture: '3-in-1 IPM Traction Motor + SiC Inverter + Reduction Gear',
+        sensors: [
+          {
+            id: 'resolver',
+            code: 'EV-RES',
+            name: 'Traction Motor Rotor Position Resolver',
+            dtcs: ['P0A3F', 'P0A40', 'P1A10'],
+            oemPart: 'EV-3109-RES-01',
+            puckStyle: 'barrel_angled',
+            puckLabel: '6-Wire Sine/Cosine Rotor Resolver Puck',
+            zone: 'E-Axle Motor End-Bell • Non-Drive Side',
+            pos3d: { x: 1.48, y: -0.25, z: 0.65 },
+            rot3d: { x: 0.2, y: 0.4, z: 0 },
+            camPreset: 'rear',
+            torque: 'T25 Torx • 6.5 Nm',
+            tools: ['Insulated 1000V Gloves', 'T25 Torx', 'Oscilloscope'],
+            locationDesc: 'Mounted on the end-bell housing of the permanent-magnet synchronous traction motor, sensing rotor angle for inverter phase commutation.',
+            accessSteps: [
+              'MANDATORY: Pull High-Voltage Service Disconnect (MSD) and wait 10 minutes before touching orange HV cables.',
+              'Unclip shielded 6-pin resolver harness on motor end-bell and remove 3x T25 screws.'
+            ],
+            circuitType: 'Variable Reluctance Resolver (6-Wire)',
+            koeoVal: 'Excitation: 10 kHz 7Vpp Sine',
+            ohmsVal: 'Exc: 12–18 Ω | Sin/Cos: 25–38 Ω',
+            waveVal: 'Modulated Sine / Cosine Envelope',
+            pins: [
+              { num: 1, label: 'EXC +', color: '#DC2626', wire: 'Red' },
+              { num: 2, label: 'EXC -', color: '#94A3B8', wire: 'Black' },
+              { num: 3, label: 'SIN +', color: '#38BDF8', wire: 'Blue' },
+              { num: 4, label: 'COS +', color: '#FACC15', wire: 'Yellow' }
+            ],
+            failureTrap: 'Any resolver offset error causes violent motor shudder on launch—always perform "Resolver Zero-Position Calibration" via scan tool after replacement.'
+          },
+          {
+            id: 'igbt_temp',
+            code: 'IGBT-NTC',
+            name: 'Inverter Power Module & Stator Temp Sensor',
+            dtcs: ['P0A78', 'P0A2B', 'P0AEE'],
+            oemPart: 'EV-3109-NTC-04',
+            puckStyle: 'box_map',
+            puckLabel: 'Inverter Coolant & IGBT Thermal Puck',
+            zone: 'Top Inverter Housing • Coolant Manifold',
+            pos3d: { x: -0.15, y: 0.85, z: 0.55 },
+            rot3d: { x: 0, y: 0, z: 0 },
+            camPreset: 'top',
+            torque: '10mm • 8.0 Nm',
+            tools: ['10mm Insulated Socket', 'Cooling System Bleeder'],
+            locationDesc: 'Integrated into the top inverter cold-plate manifold directly above the motor stator phase busbars.',
+            accessSteps: [
+              'Verify HV isolation status in BMS/Inverter live data.',
+              'Unclip 4-pin low-voltage signal plug on inverter housing.'
+            ],
+            circuitType: 'Dual NTC Thermistor (4-Wire)',
+            koeoVal: '25°C: 10kΩ (~2.5V)',
+            ohmsVal: '25°C: 10.0 kΩ ± 1%',
+            waveVal: 'Analog Thermal Curve',
+            pins: [
+              { num: 1, label: 'IGBT NTC', color: '#38BDF8', wire: 'Green' },
+              { num: 2, label: 'GND', color: '#94A3B8', wire: 'Brown' },
+              { num: 3, label: 'STATOR NTC', color: '#FACC15', wire: 'Orange' },
+              { num: 4, label: 'GND', color: '#94A3B8', wire: 'Black' }
+            ],
+            failureTrap: 'Air locks in the inverter glycol loop trigger rapid thermal derating ("Turtle Mode") even when the radiator feels cool.'
+          },
+          {
+            id: 'hvil',
+            code: 'HVIL-LOOP',
+            name: 'High-Voltage Interlock Loop Sensor',
+            dtcs: ['P0A0D', 'P0A0A'],
+            oemPart: 'EV-3109-HVIL-02',
+            puckStyle: 'brass_ect',
+            puckLabel: 'HV Connector Pilot Interlock Puck',
+            zone: 'Inverter Orange HV Busbar Header',
+            pos3d: { x: -0.45, y: 0.25, z: -0.95 },
+            rot3d: { x: -0.35, y: 0, z: 0 },
+            camPreset: 'exhaust',
+            torque: 'Locking Slide Tab',
+            tools: ['1000V Insulated Gloves', 'Multimeter'],
+            locationDesc: 'Seated inside the orange high-voltage 3-phase and DC busbar connector header on the inverter front face.',
+            accessSteps: [
+              'Ensure vehicle is powered OFF and MSD service plug is removed.',
+              'Verify orange HV connector secondary CPA lock is clicked all the way in.'
+            ],
+            circuitType: '12V PWM Continuity Loop',
+            koeoVal: '12V 100Hz Square Wave',
+            ohmsVal: 'Loop Continuity < 2.0 Ω',
+            waveVal: 'Continuous Pilot PWM',
+            pins: [
+              { num: 1, label: 'HVIL IN', color: '#DC2626', wire: 'Orange/Wht' },
+              { num: 2, label: 'HVIL OUT', color: '#38BDF8', wire: 'Orange/Blk' }
+            ],
+            failureTrap: '95% of P0A0D HVIL faults are caused by a partially unlatched orange connector CPA clip on the AC compressor or PTC heater!'
+          }
+        ]
+      }
+    };
+
+    /**
+     * =========================================================================
+     * 2. COMPLETE WIRED CATALOG FROM `indian_cars_specs_catalog`
+     * =========================================================================
+     */
+    const RAW_INDIAN_CATALOG = [
+      // MARUTI SUZUKI (17 Models)
+      { brand: 'Maruti Suzuki', model: 'Alto K10', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 cc', transmissions: '5-MT / 5-AMT', notes: 'K10C DualJet 3-cyl; CNG 56 bhp', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'S-Presso', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 cc', transmissions: '5-MT / 5-AMT', notes: 'K10C engine; CNG variant available', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Celerio', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 cc', transmissions: '5-MT / 5-AMT', notes: 'K10C DualJet; high fuel efficiency', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Wagon R', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 – 1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.0L K10C & 1.2L K12N options', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Swift', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '4th Gen Z12E 3-cyl 80 bhp / 112 Nm', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Baleno', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L K12N DualJet 4-cyl 88.5 bhp', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Dzire', bodyType: 'Sedan', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: 'New-gen Z12E 3-cyl; 5-star GNCAP', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Fronx', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 – 1197 cc', transmissions: '5-MT / 5-AMT / 6-AT', notes: '1.2L K12N NA + 1.0L Boosterjet Turbo', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Brezza', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1462 cc', transmissions: '5-MT / 6-AT', notes: '1.5L K15C Mild-Hybrid 102 bhp', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Grand Vitara', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG', 'Hybrid'], ccRange: '1462 – 1490 cc', transmissions: '5-MT / 6-AT / e-CVT', notes: '1.5L K15C Mild-Hybrid (AWD opt) + Strong Hybrid', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Victoris', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG', 'Hybrid'], ccRange: '1462 – 1490 cc', transmissions: '5-MT / 6-AT / e-CVT', notes: 'Arena mid-size SUV; 5-star Bharat NCAP', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Jimny', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '1462 cc', transmissions: '5-MT / 4-AT', notes: '1.5L K15B longitudinal 4WD AllGrip Pro', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Ertiga', bodyType: 'MPV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1462 cc', transmissions: '5-MT / 6-AT', notes: '1.5L K15C Smart Hybrid 7-seater', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'XL6', bodyType: 'MPV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1462 cc', transmissions: '5-MT / 6-AT', notes: '1.5L K15C 6-seater captain chairs', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Invicto', bodyType: 'MPV', fuelTypes: ['Hybrid'], ccRange: '1987 cc', transmissions: 'e-CVT', notes: '2.0L TNGA Strong Hybrid 184 bhp', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'Eeco', bodyType: 'Minivan', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT', notes: '1.2L K12N 80 bhp; 5/7-seater utility', manualUrl: 'https://www.marutisuzuki.com/arena/car-manuals' },
+      { brand: 'Maruti Suzuki', model: 'e Vitara', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '49/61 kWh LFP battery; 142–172 bhp', manualUrl: 'https://www.nexaexperience.com/car-manuals' },
+
+      // HYUNDAI (10 Models)
+      { brand: 'Hyundai', model: 'Grand i10 Nios', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L Kappa 4-cyl 82 bhp; Dual-cylinder CNG', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'i20', bodyType: 'Hatchback', fuelTypes: ['Petrol'], ccRange: '1197 cc', transmissions: '5-MT / IVT (CVT)', notes: '1.2L Kappa 82/87 bhp; N Line 1.0 Turbo 7-DCT', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Aura', bodyType: 'Sedan', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L Kappa; popular fleet & family CNG sedan', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Verna', bodyType: 'Sedan', fuelTypes: ['Petrol'], ccRange: '1482 – 1497 cc', transmissions: '6-MT / IVT / 7-DCT', notes: '1.5L MPi (113 bhp) & 1.5L Turbo GDi (158 bhp)', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Exter', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L Kappa; Hy-CNG Duo dual-tank option', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Venue', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '998 – 1493 cc', transmissions: '5-MT / 6-MT / 6-AT / 7-DCT', notes: '1.2L NA, 1.0L Turbo GDi (118 bhp), 1.5L CRDi', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Creta', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1482 – 1497 cc', transmissions: '6-MT / IVT / 6-AT / 7-DCT', notes: '1.5L MPi, 1.5L Turbo GDi (158 bhp), 1.5L CRDi', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Creta Electric', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '42 kWh (390 km) & 51.4 kWh (473 km)', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Alcazar', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1482 – 1493 cc', transmissions: '6-MT / 6-AT / 7-DCT', notes: '6/7-seater; 1.5L Turbo GDi & 1.5L CRDi Diesel', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+      { brand: 'Hyundai', model: 'Bayon', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '998 – 1197 cc', transmissions: '6-MT / 7-DCT', notes: 'Crossover utility vehicle; 1.2L / 1.0L Turbo', manualUrl: 'https://www.hyundai.com/in/en/connect-to-service/owners-manual' },
+
+      // TATA MOTORS (15 Models)
+      { brand: 'Tata Motors', model: 'Tiago', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '1199 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L Revotron 3-cyl 85 bhp; industry-first CNG AMT', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Tiago EV', bodyType: 'Hatchback', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '19.2 & 24 kWh Ziptron; 250–315 km MIDC', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Altroz', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG', 'Diesel'], ccRange: '1199 – 1497 cc', transmissions: '5-MT / 6-DCA', notes: 'Only hatchback with 1.5L Diesel; Racer 1.2 Turbo', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Punch', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1199 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L Revotron 87 bhp; twin-cylinder iCNG', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Punch EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: 'acti.ev platform; 25 & 35 kWh (up to 421 km)', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Nexon', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG', 'Diesel'], ccRange: '1199 – 1497 cc', transmissions: '5-MT / 6-MT / 6-AMT / 7-DCA', notes: '1.2L Revotron Turbo (118 bhp), 1.5L Revotorq Diesel, iCNG', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Nexon EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '30, 40.5 & 45 kWh batteries; up to 489 km range', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Curvv', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1199 – 1497 cc', transmissions: '6-MT / 7-DCA', notes: 'SUV-Coupe; Hyperion 1.2 GDi Turbo (123 bhp) & 1.5 Diesel', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Curvv EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '45 & 55 kWh batteries; up to 585 km MIDC range', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Sierra', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1498 – 1956 cc', transmissions: '6-MT / 6-AT / 7-DCT', notes: '1.5L Hyperion T-GDi (160 bhp) & 1.5L/2.0L Kryotec Diesel', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Sierra EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: 'acti.ev+ platform; 55 & 65 kWh LFP; AWD dual-motor', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Harrier', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1498 – 1956 cc', transmissions: '6-MT / 6-AT', notes: '2.0L Kryotec Diesel (168 bhp) + 1.5L Hyperion T-GDi', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Harrier EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '65 & 75 kWh LFP; Dual-Motor QWD (391 bhp / 504 Nm)', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+      { brand: 'Tata Motors', model: 'Safari', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1498 – 1956 cc', transmissions: '6-MT / 6-AT', notes: '6/7-seater flagship; 2.0L Kryotec Diesel & 1.5L T-GDi', manualUrl: 'https://tata.cars/service/owners/owners-manual.html' },
+
+      // MAHINDRA (12 Models)
+      { brand: 'Mahindra', model: 'Bolero', bodyType: 'SUV', fuelTypes: ['Diesel'], ccRange: '1493 cc', transmissions: '5-MT', notes: '1.5L mHawk75 3-cyl Diesel 75 bhp; RWD', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'Bolero Neo', bodyType: 'SUV', fuelTypes: ['Diesel'], ccRange: '1493 cc', transmissions: '5-MT', notes: '1.5L mHawk100 Diesel 100 bhp; Multi-Terrain Diff', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'XUV 3XO', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1197 – 1497 cc', transmissions: '6-MT / 6-AMT / 6-AT', notes: '1.2L TCMPFi (110 bhp), 1.2L TGDi (129 bhp), 1.5L CRDe', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'Thar', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1497 – 2184 cc', transmissions: '6-MT / 6-AT', notes: '1.5L Diesel RWD + 2.2L mHawk & 2.0L mStallion 4WD', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'Thar ROXX', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1997 – 2184 cc', transmissions: '6-MT / 6-AT', notes: '5-door; 2.0L mStallion (174 bhp) & 2.2L mHawk (172 bhp)', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'Scorpio Classic', bodyType: 'SUV', fuelTypes: ['Diesel'], ccRange: '2184 cc', transmissions: '6-MT', notes: '2.2L Gen-2 mHawk Diesel 130 bhp / 300 Nm; RWD', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'Scorpio-N', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1997 – 2184 cc', transmissions: '6-MT / 6-AT', notes: '2.0L mStallion (200 bhp) & 2.2L mHawk (172 bhp / 400 Nm)', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'XUV700', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1997 – 2184 cc', transmissions: '6-MT / 6-AT', notes: '2.0L mStallion (197 bhp) & 2.2L mHawk (182 bhp; AWD opt)', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'BE 6', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: 'INGLO platform; 59 & 79 kWh Blade LFP; 228–282 bhp RWD', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'XEV 9E', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: 'INGLO Coupe-SUV; 59 & 79 kWh; 656 km MIDC range', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+      { brand: 'Mahindra', model: 'XEV 9S', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '7-seat electric SUV; 59/70/79 kWh; up to 286 bhp', manualUrl: 'https://mvault.mahindra.com/owners_manual' },
+
+      // KIA (9 Models)
+      { brand: 'Kia', model: 'Sonet', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '998 – 1493 cc', transmissions: '5-MT / 6-MT / 6-iMT / 7-DCT / 6-AT', notes: '1.2L NA, 1.0L Turbo GDi (118 bhp), 1.5L CRDi Diesel', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Syros', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '998 – 1493 cc', transmissions: '6-MT / 7-DCT / 6-AT', notes: '1.0L Turbo GDi (118 bhp) & 1.5L CRDi (114 bhp)', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Syros EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '42 & 49 kWh LFP battery options; FWD', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Seltos', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1482 – 1497 cc', transmissions: '6-MT / IVT / 6-iMT / 7-DCT / 6-AT', notes: '1.5L NA, 1.5L Turbo GDi (158 bhp), 1.5L CRDi Diesel', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Carens Clavis', bodyType: 'MPV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1482 – 1497 cc', transmissions: '6-MT / 6-iMT / 7-DCT / 6-AT', notes: '6/7-seater RV; 1.5L NA, 1.5L Turbo, 1.5L CRDi', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Carens Clavis EV', bodyType: 'MPV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '42 & 51.4 kWh batteries; up to 490 km range', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'Carnival', bodyType: 'MPV', fuelTypes: ['Diesel'], ccRange: '2151 cc', transmissions: '8-AT', notes: '2.2L Smartstream CRDi Diesel 190 bhp / 441 Nm', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+      { brand: 'Kia', model: 'EV6', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '84 kWh battery; 800V E-GMP; 320 bhp AWD', manualUrl: 'https://www.kia.com/in/service/service-and-maintenance/owners-manual.html' },
+
+      // TOYOTA (8 Models)
+      { brand: 'Toyota', model: 'Glanza', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'CNG'], ccRange: '1197 cc', transmissions: '5-MT / 5-AMT', notes: '1.2L K12N DualJet 88.5 bhp; E-CNG option', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Urban Cruiser Taisor', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '998 – 1197 cc', transmissions: '5-MT / 5-AMT / 6-AT', notes: '1.2L K12N NA + 1.0L Turbo Petrol', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Rumion', bodyType: 'MPV', fuelTypes: ['Petrol', 'CNG'], ccRange: '1462 cc', transmissions: '5-MT / 6-AT', notes: '1.5L K15C NeoDrive 7-seater MPV', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Urban Cruiser Hyryder', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG', 'Hybrid'], ccRange: '1462 – 1490 cc', transmissions: '5-MT / 6-AT / e-CVT', notes: '1.5L NeoDrive (AWD opt) + 1.5L Strong Hybrid', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Urban Cruiser Ebella', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '49/61 kWh LFP battery; up to 543 km ARAI range', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Innova Crysta', bodyType: 'MPV', fuelTypes: ['Diesel'], ccRange: '2393 cc', transmissions: '5-MT', notes: '2.4L 2GD-FTV Turbo Diesel 148 bhp / 343 Nm; RWD', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Innova Hycross', bodyType: 'MPV', fuelTypes: ['Petrol', 'Hybrid'], ccRange: '1987 cc', transmissions: 'CVT / e-CVT', notes: '2.0L TNGA Petrol & 5th-Gen Strong Hybrid 184 bhp', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+      { brand: 'Toyota', model: 'Fortuner', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '2694 – 2755 cc', transmissions: '5-MT / 6-MT / 6-AT', notes: '2.7L Petrol & 2.8L 1GD-FTV Diesel (201 bhp / 500 Nm)', manualUrl: 'https://www.toyotabharat.com/online-services/owners-manual/' },
+
+      // HONDA, VOLKSWAGEN, SKODA, MG, RENAULT, NISSAN, BYD (20 Models)
+      { brand: 'Honda', model: 'Amaze', bodyType: 'Sedan', fuelTypes: ['Petrol'], ccRange: '1199 cc', transmissions: '5-MT / CVT', notes: '1.2L i-VTEC 4-cyl 89 bhp; 3rd Gen ADAS', manualUrl: 'https://www.hondacarindia.com/honda-services/owners-manual' },
+      { brand: 'Honda', model: 'City', bodyType: 'Sedan', fuelTypes: ['Petrol', 'Hybrid'], ccRange: '1498 cc', transmissions: '6-MT / CVT / e-CVT', notes: '1.5L L15Z i-VTEC DOHC (119 bhp) + City e:HEV Hybrid', manualUrl: 'https://www.hondacarindia.com/honda-services/owners-manual' },
+      { brand: 'Honda', model: 'Elevate', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '1498 cc', transmissions: '6-MT / CVT', notes: '1.5L L15Z i-VTEC DOHC 119 bhp; 220mm ground clearance', manualUrl: 'https://www.hondacarindia.com/honda-services/owners-manual' },
+      { brand: 'Volkswagen', model: 'Polo', bodyType: 'Hatchback', fuelTypes: ['Petrol', 'Diesel'], ccRange: '999 – 1498 cc', transmissions: '5-MT / 6-MT / 6-AT / 7-DSG', notes: '1.0L TSI EA211 (108 bhp) & 1.5L TDI EA189', manualUrl: 'https://www.volkswagen.co.in/en/owners-and-services/about-your-car/manuals.html' },
+      { brand: 'Volkswagen', model: 'Virtus', bodyType: 'Sedan', fuelTypes: ['Petrol'], ccRange: '999 – 1498 cc', transmissions: '6-MT / 6-AT / 7-DSG', notes: '1.0L TSI (114 bhp) & 1.5L TSI EVO ACT (148 bhp)', manualUrl: 'https://www.volkswagen.co.in/en/owners-and-services/about-your-car/manuals.html' },
+      { brand: 'Volkswagen', model: 'Taigun', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '999 – 1498 cc', transmissions: '6-MT / 6-AT / 7-DSG', notes: 'MQB-A0-IN; 1.0L TSI & 1.5L TSI EVO GT', manualUrl: 'https://www.volkswagen.co.in/en/owners-and-services/about-your-car/manuals.html' },
+      { brand: 'Skoda', model: 'Slavia', bodyType: 'Sedan', fuelTypes: ['Petrol'], ccRange: '999 – 1498 cc', transmissions: '6-MT / 6-AT / 7-DSG', notes: '1.0L TSI EA211 & 1.5L TSI EVO Cylinder-on-Demand', manualUrl: 'https://www.skoda-auto.co.in/owner-support/owners-manuals' },
+      { brand: 'Skoda', model: 'Kushaq', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '999 – 1498 cc', transmissions: '6-MT / 6-AT / 7-DSG', notes: '1.0L TSI (114 bhp) & 1.5L TSI EVO (148 bhp)', manualUrl: 'https://www.skoda-auto.co.in/owner-support/owners-manuals' },
+      { brand: 'Skoda', model: 'Kylaq', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '999 cc', transmissions: '6-MT / 6-AT', notes: 'Sub-4m SUV; 1.0L TSI EA211 114 bhp / 178 Nm', manualUrl: 'https://www.skoda-auto.co.in/owner-support/owners-manuals' },
+      { brand: 'MG', model: 'Astor', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '1349 – 1498 cc', transmissions: '5-MT / CVT / 6-AT', notes: '1.5L VTi-TECH NA & 1.3L Brit Dynamic Turbo', manualUrl: 'https://www.mgmotor.co.in/service/owners-manual' },
+      { brand: 'MG', model: 'Hector', bodyType: 'SUV', fuelTypes: ['Petrol', 'Diesel'], ccRange: '1451 – 1956 cc', transmissions: '6-MT / CVT', notes: '1.5L SGE Turbo GDI (141 bhp) & 2.0L Multijet Diesel', manualUrl: 'https://www.mgmotor.co.in/service/owners-manual' },
+      { brand: 'MG', model: 'Windsor EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '38 & 52.9 kWh Prismatic LFP; 134 bhp FWD', manualUrl: 'https://www.mgmotor.co.in/service/owners-manual' },
+      { brand: 'MG', model: 'ZS EV', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '50.3 kWh LFP battery; 174 bhp / 280 Nm', manualUrl: 'https://www.mgmotor.co.in/service/owners-manual' },
+      { brand: 'Renault', model: 'Kwid', bodyType: 'Hatchback', fuelTypes: ['Petrol'], ccRange: '999 cc', transmissions: '5-MT / 5-AMT', notes: '1.0L SCe 3-cyl 67 bhp', manualUrl: 'https://www.renault.co.in/maintenance.html' },
+      { brand: 'Renault', model: 'Triber', bodyType: 'MPV', fuelTypes: ['Petrol'], ccRange: '999 cc', transmissions: '5-MT / 5-AMT', notes: '1.0L Energy 3-cyl 71 bhp; modular 7-seater', manualUrl: 'https://www.renault.co.in/maintenance.html' },
+      { brand: 'Renault', model: 'Kiger', bodyType: 'SUV', fuelTypes: ['Petrol'], ccRange: '999 cc', transmissions: '5-MT / 5-AMT / CVT', notes: '1.0L Energy NA & 1.0L HRA0 Turbo Petrol (99 bhp)', manualUrl: 'https://www.renault.co.in/maintenance.html' },
+      { brand: 'Nissan', model: 'Magnite', bodyType: 'SUV', fuelTypes: ['Petrol', 'CNG'], ccRange: '999 cc', transmissions: '5-MT / 5-AMT / CVT', notes: '1.0L B4D NA & 1.0L HRA0 Turbo (99 bhp)', manualUrl: 'https://www.nissan.in/services/owners-manual.html' },
+      { brand: 'BYD', model: 'Atto 3', bodyType: 'SUV', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '49.92 & 60.48 kWh Blade LFP; e-Platform 3.0 8-in-1', manualUrl: 'https://www.bydautoindia.com/' },
+      { brand: 'BYD', model: 'Seal', bodyType: 'Sedan', fuelTypes: ['Electric'], ccRange: 'N/A (EV)', transmissions: 'Single-Speed Auto', notes: '61.44 & 82.56 kWh Cell-to-Body Blade; up to 523 bhp AWD', manualUrl: 'https://www.bydautoindia.com/' }
+    ];
+
+    let CATALOG_LIST = [...RAW_INDIAN_CATALOG];
+    let currentCarIndex = 0;
+    let currentFuelType = 'Petrol';
+    let currentSensorId = 'ckp';
+    let xrayEnabled = false;
+
+    function resolveArchitectureForCar(car, fuelType) {
+      const f = (fuelType || car.fuelTypes[0] || 'Petrol').toLowerCase();
+      const b = car.brand.toLowerCase();
+      const notes = (car.notes || '').toLowerCase();
+
+      if (f.includes('electric') || f.includes('ev') || car.ccRange.includes('EV')) {
+        return POWERTRAIN_ARCHITECTURES.BEV_POWERTRAIN;
+      }
+      if (f.includes('diesel')) {
+        return POWERTRAIN_ARCHITECTURES.CRDI_DIESEL;
+      }
+      if (b.includes('honda') || f.includes('hybrid')) {
+        return POWERTRAIN_ARCHITECTURES.HONDA_IVTEC;
+      }
+      if (b.includes('volkswagen') || b.includes('skoda') || b.includes('mg')) {
+        return POWERTRAIN_ARCHITECTURES.VAG_TSI;
+      }
+      if (notes.includes('turbo') || notes.includes('gdi') || notes.includes('revotron') || notes.includes('mstallion')) {
+        return POWERTRAIN_ARCHITECTURES.REVOTRON_TURBO;
+      }
+      return POWERTRAIN_ARCHITECTURES.K_SERIES_NA;
+    }
+
+    function getActiveSensorsForCar(car, fuelType) {
+      const arch = resolveArchitectureForCar(car, fuelType);
+      const isCng = (fuelType || '').toLowerCase().includes('cng');
+      return arch.sensors.filter((s) => !s.cngOnly || isCng);
+    }
+
+    /**
+     * =========================================================================
+     * 3. THREE.JS 3D ENGINE BAY / E-AXLE & DETAILED 3D SENSOR PUCK BUILDER
+     * =========================================================================
+     */
+    let wsScene, wsCamera, wsRenderer, wsEngineGroup, wsBlockMaterials = [];
+    let wsSensorMeshes = {};
+    let wsTargetRing = null;
+    let wsRaycaster = new THREE.Raycaster();
+    let wsMouse = new THREE.Vector2();
+    let wsOrbit = { theta: 0.65, phi: 1.05, radius: 4.9, target: new THREE.Vector3(0, 0.15, 0) };
+    let wsGoalOrbit = { theta: 0.65, phi: 1.05, radius: 4.9, target: new THREE.Vector3(0, 0.15, 0) };
+    let wsDragging = false, wsPrevMouse = { x: 0, y: 0 }, wsDownPos = { x: 0, y: 0 };
+
+    let cuScene, cuCamera, cuRenderer, cuPivotGroup;
+    let cuDragging = false, cuPrevX = 0;
+
+    let heroScene, heroCamera, heroRenderer, heroGroup;
+
+    function create3DSensorPuckMesh(sensor, isCloseup = false) {
+      const group = new THREE.Group();
+      group.userData = { sensorId: sensor.id };
+
+      const scale = isCloseup ? 2.4 : 1.0;
+      group.scale.set(scale, scale, scale);
+
+      const plasticMat = new THREE.MeshStandardMaterial({ color: 0x1E293B, roughness: 0.45, metalness: 0.25 });
+      const accentRedMat = new THREE.MeshStandardMaterial({
+        color: 0xDC2626,
+        emissive: 0x7F1D1D,
+        emissiveIntensity: 0.45,
+        roughness: 0.3,
+        metalness: 0.2,
+      });
+      const metalMat = new THREE.MeshStandardMaterial({ color: 0xCBD5E1, roughness: 0.25, metalness: 0.85 });
+      const brassMat = new THREE.MeshStandardMaterial({ color: 0xEAB308, roughness: 0.3, metalness: 0.8 });
+      const wireMat = new THREE.MeshStandardMaterial({ color: 0x0F172A, roughness: 0.7 });
+
+      const style = sensor.puckStyle || 'barrel_angled';
+
+      if (style === 'box_map') {
+        const body = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.20), plasticMat);
+        body.position.y = 0.08;
+        group.add(body);
+
+        const ear = new THREE.Mesh(new THREE.BoxGeometry(0.10, 0.03, 0.10), plasticMat);
+        ear.position.set(0.15, 0.04, 0);
+        group.add(ear);
+
+        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.025, 0.04, 6), metalMat);
+        bolt.position.set(0.15, 0.06, 0);
+        group.add(bolt);
+
+        const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.045, 0.12, 16), plasticMat);
+        snout.position.y = -0.02;
+        group.add(snout);
+
+        const oring = new THREE.Mesh(new THREE.TorusGeometry(0.048, 0.01, 10, 20), accentRedMat);
+        oring.rotation.x = Math.PI / 2;
+        oring.position.y = -0.03;
+        group.add(oring);
+
+        const plug = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.09, 0.14), accentRedMat);
+        plug.position.set(-0.16, 0.08, 0);
+        group.add(plug);
+
+        const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.24, 8), wireMat);
+        wire.rotation.z = Math.PI / 2;
+        wire.position.set(-0.32, 0.08, 0);
+        group.add(wire);
+      } else if (style === 'hex_o2') {
+        const tip = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.03, 0.14, 16), metalMat);
+        tip.position.y = -0.06;
+        group.add(tip);
+
+        const hex = new THREE.Mesh(new THREE.CylinderGeometry(0.075, 0.075, 0.06, 6), metalMat);
+        hex.position.y = 0.03;
+        group.add(hex);
+
+        const shield = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.058, 0.18, 16), metalMat);
+        shield.position.y = 0.15;
+        group.add(shield);
+
+        const boot = new THREE.Mesh(new THREE.CylinderGeometry(0.038, 0.045, 0.07, 12), accentRedMat);
+        boot.position.y = 0.26;
+        group.add(boot);
+
+        const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.28, 8), wireMat);
+        wire.position.set(0.05, 0.38, 0);
+        wire.rotation.z = -0.35;
+        group.add(wire);
+      } else if (style === 'donut_knock') {
+        const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.07, 20), plasticMat);
+        group.add(housing);
+
+        const collar = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.09, 16), metalMat);
+        group.add(collar);
+
+        const centerBolt = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.12, 6), brassMat);
+        centerBolt.position.y = 0.02;
+        group.add(centerBolt);
+
+        const connector = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.06, 0.14), accentRedMat);
+        connector.position.set(0, 0, 0.14);
+        group.add(connector);
+
+        const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8), wireMat);
+        wire.rotation.x = Math.PI / 2;
+        wire.position.set(0, 0, 0.28);
+        group.add(wire);
+      } else if (style === 'brass_ect') {
+        const probe = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.025, 0.14, 14), brassMat);
+        probe.position.y = -0.06;
+        group.add(probe);
+
+        const hex = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.065, 0.05, 6), brassMat);
+        hex.position.y = 0.03;
+        group.add(hex);
+
+        const topPlug = new THREE.Mesh(new THREE.BoxGeometry(0.09, 0.13, 0.08), accentRedMat);
+        topPlug.position.y = 0.12;
+        group.add(topPlug);
+
+        const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.22, 8), wireMat);
+        wire.position.y = 0.28;
+        group.add(wire);
+      } else {
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.048, 0.048, 0.20, 16), plasticMat);
+        barrel.position.y = -0.02;
+        group.add(barrel);
+
+        const oring = new THREE.Mesh(new THREE.TorusGeometry(0.05, 0.01, 10, 20), accentRedMat);
+        oring.rotation.x = Math.PI / 2;
+        oring.position.y = -0.04;
+        group.add(oring);
+
+        const flange = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.035, 0.11), plasticMat);
+        flange.position.set(0.04, 0.07, 0);
+        group.add(flange);
+
+        const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.024, 0.024, 0.05, 6), metalMat);
+        bolt.position.set(0.11, 0.09, 0);
+        group.add(bolt);
+
+        const connector = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.09, 0.11), accentRedMat);
+        connector.position.set(-0.07, 0.13, 0);
+        group.add(connector);
+
+        const wire = new THREE.Mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.25, 8), wireMat);
+        wire.rotation.z = Math.PI / 2;
+        wire.position.set(-0.22, 0.13, 0);
+        group.add(wire);
+      }
+
+      return group;
+    }
+
+    function buildParametricEngineAssembly(targetScene, isEv = false) {
+      const engineGroup = new THREE.Group();
+      const blockMats = [];
+
+      const castAluminumMat = new THREE.MeshStandardMaterial({
+        color: 0x94A3B8,
+        roughness: 0.42,
+        metalness: 0.72,
+        transparent: true,
+        opacity: 1.0,
+      });
+      blockMats.push(castAluminumMat);
+
+      const darkValveCoverMat = new THREE.MeshStandardMaterial({
+        color: 0x1E293B,
+        roughness: 0.35,
+        metalness: 0.45,
+        transparent: true,
+        opacity: 1.0,
+      });
+      blockMats.push(darkValveCoverMat);
+
+      const intakeMat = new THREE.MeshStandardMaterial({
+        color: 0x0F172A,
+        roughness: 0.5,
+        metalness: 0.25,
+        transparent: true,
+        opacity: 1.0,
+      });
+      blockMats.push(intakeMat);
+
+      if (isEv) {
+        // 3-in-1 High-Voltage EV E-Axle Motor + SiC Inverter + Reduction Gearbox
+        const statorDrum = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.68, 1.85, 28), castAluminumMat);
+        statorDrum.rotation.z = Math.PI / 2;
+        statorDrum.position.set(0.15, -0.1, 0);
+        engineGroup.add(statorDrum);
+
+        // Cooling fins on motor housing
+        for (let i = -3; i <= 3; i++) {
+          const fin = new THREE.Mesh(new THREE.TorusGeometry(0.70, 0.025, 8, 28), darkValveCoverMat);
+          fin.rotation.y = Math.PI / 2;
+          fin.position.set(0.15 + i * 0.22, -0.1, 0);
+          engineGroup.add(fin);
+        }
+
+        // Top Silicon-Carbide Power Inverter Box
+        const inverterBox = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.42, 1.05), darkValveCoverMat);
+        inverterBox.position.set(0.05, 0.68, 0);
+        engineGroup.add(inverterBox);
+
+        // Orange High-Voltage 3-Phase Busbar & DC Cables
+        const hvOrangeMat = new THREE.MeshStandardMaterial({ color: 0xF97316, roughness: 0.35 });
+        const hvHeader = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.22, 0.28), hvOrangeMat);
+        hvHeader.position.set(-0.35, 0.35, -0.78);
+        engineGroup.add(hvHeader);
+
+        // Single-Speed Helical Reduction Gearbox
+        const gearHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.58, 0.65, 0.72, 22), castAluminumMat);
+        gearHousing.rotation.z = Math.PI / 2;
+        gearHousing.position.set(-1.15, -0.15, 0.12);
+        engineGroup.add(gearHousing);
+      } else {
+        const exhaustMat = new THREE.MeshStandardMaterial({ color: 0x7C2D12, roughness: 0.6, metalness: 0.65 });
+        const pulleyMat = new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.3, metalness: 0.85 });
+
+        const crankcase = new THREE.Mesh(new THREE.BoxGeometry(2.35, 0.82, 1.12), castAluminumMat);
+        crankcase.position.set(0, -0.15, 0);
+        engineGroup.add(crankcase);
+
+        const oilPan = new THREE.Mesh(new THREE.BoxGeometry(2.1, 0.36, 0.96), pulleyMat);
+        oilPan.position.set(-0.05, -0.72, 0);
+        engineGroup.add(oilPan);
+
+        const cylHead = new THREE.Mesh(new THREE.BoxGeometry(2.38, 0.52, 1.18), castAluminumMat);
+        cylHead.position.set(0, 0.50, 0);
+        engineGroup.add(cylHead);
+
+        const valveCover = new THREE.Mesh(new THREE.BoxGeometry(2.26, 0.28, 1.02), darkValveCoverMat);
+        valveCover.position.set(0, 0.88, 0);
+        engineGroup.add(valveCover);
+
+        const coilMat = new THREE.MeshStandardMaterial({ color: 0xDC2626, roughness: 0.35 });
+        for (let i = 0; i < 4; i++) {
+          const coil = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.12, 0.28), coilMat);
+          coil.position.set(-0.72 + i * 0.48, 1.04, 0);
+          engineGroup.add(coil);
+        }
+
+        const plenum = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.38, 0.52), intakeMat);
+        plenum.position.set(-0.1, 0.55, 1.02);
+        engineGroup.add(plenum);
+
+        for (let i = 0; i < 4; i++) {
+          const runner = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.55, 14), intakeMat);
+          runner.rotation.x = Math.PI / 3;
+          runner.position.set(-0.72 + i * 0.48, 0.45, 0.72);
+          engineGroup.add(runner);
+        }
+
+        for (let i = 0; i < 4; i++) {
+          const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.10, 0.10, 0.55, 12), exhaustMat);
+          pipe.rotation.x = -Math.PI / 3;
+          pipe.position.set(-0.72 + i * 0.48, 0.38, -0.74);
+          engineGroup.add(pipe);
+        }
+        const catConverter = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.78, 18), exhaustMat);
+        catConverter.position.set(-0.15, -0.15, -1.05);
+        engineGroup.add(catConverter);
+
+        const timingCover = new THREE.Mesh(new THREE.BoxGeometry(0.26, 1.45, 1.04), castAluminumMat);
+        timingCover.position.set(-1.28, 0.15, 0);
+        engineGroup.add(timingCover);
+
+        const crankPulley = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.32, 0.14, 24), pulleyMat);
+        crankPulley.rotation.z = Math.PI / 2;
+        crankPulley.position.set(-1.46, -0.35, 0);
+        engineGroup.add(crankPulley);
+
+        const bellhousing = new THREE.Mesh(new THREE.CylinderGeometry(0.68, 0.78, 0.85, 22), castAluminumMat);
+        bellhousing.rotation.z = Math.PI / 2;
+        bellhousing.position.set(1.58, -0.12, 0.05);
+        engineGroup.add(bellhousing);
+      }
+
+      targetScene.add(engineGroup);
+      return { engineGroup, blockMats };
+    }
+
+    function rebuildWorkspacePowertrain3D(isEv, activeSensors) {
+      if (!wsScene) return;
+      if (wsEngineGroup) {
+        wsScene.remove(wsEngineGroup);
+      }
+      wsSensorMeshes = {};
+
+      const built = buildParametricEngineAssembly(wsScene, isEv);
+      wsEngineGroup = built.engineGroup;
+      wsBlockMaterials = built.blockMats;
+
+      if (xrayEnabled) {
+        wsBlockMaterials.forEach((mat) => {
+          mat.opacity = 0.24;
+          mat.depthWrite = false;
+          mat.needsUpdate = true;
+        });
+      }
+
+      activeSensors.forEach((s) => {
+        const puck = create3DSensorPuckMesh(s, false);
+        puck.position.set(s.pos3d.x, s.pos3d.y, s.pos3d.z);
+        if (s.rot3d) {
+          puck.rotation.set(s.rot3d.x, s.rot3d.y, s.rot3d.z);
+        }
+        wsEngineGroup.add(puck);
+        wsSensorMeshes[s.id] = puck;
+      });
+    }
+
+    function initWorkspace3D() {
+      const container = document.getElementById('spatialViewportMount');
+      if (!container) return;
+
+      wsScene = new THREE.Scene();
+      wsCamera = 
